@@ -4,6 +4,7 @@ from aiogram.filters import CommandStart, Command, CommandObject
 from aiogram.types import Message, CallbackQuery
 from aiogram.enums import ChatAction
 import app.keyboards as kb
+import openpyxl
 
 hand = Router()
 
@@ -19,6 +20,21 @@ async def cmd_start(message: Message):
     await message.answer(f'Здраствуйте {message.from_user.username}!'
                          f' Вы находитесь в главном меню ЭнергоБота.',
                          reply_markup=kb.main)
+
+
+book = openpyxl.open('data.xlsx', read_only=True)
+
+sheet = book.active
+
+
+@hand.message(F.text == 'Проверка таблиц')
+async def cmd_table(message: Message):
+    output = ""
+    for row in sheet.iter_rows():
+        for cell in row:
+            output += str(cell.value) + " "
+        output += "\n"
+    await message.answer("Таблица:\n" + output)
 
 
 @hand.message(F.text == 'Назад')

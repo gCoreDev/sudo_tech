@@ -40,3 +40,5 @@ async def teacher_connect_text(message: Message):
 		return
 	await send_message_to_teacher(message)
 	await message.answer('Сообщение успешно отправлено')
+
+
