@@ -1,6 +1,6 @@
 import asyncio
 from aiogram import Bot, F, Router
-from aiogram.filters import CommandStart, Command, CommandObject
+from aiogram.filters import CommandStart, Command, CommandObject, StateFilter
 from aiogram.types import Message, CallbackQuery
 from aiogram.enums import ChatAction
 import app.keyboards as kb
@@ -22,8 +22,10 @@ async def cmd_start(message: Message):
                          reply_markup=kb.main)
 
 
-book = openpyxl.open(r"D:\Desktop\Проекты\sudo_tech\sudo_tech\app\data.xlsx", read_only=True)
+book = openpyxl.open(r"app\data.xlsx", read_only=True)
 sheet = book.active
+
+
 @hand.message(F.text == 'Проверка таблиц')
 async def cmd_table(message: Message):
     output = ""
