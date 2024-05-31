@@ -1,8 +1,7 @@
-from aiogram import Bot
+from aiogram import Bot, types
 from aiogram.enums.parse_mode import ParseMode
 import os
 from aiogram import F, Router
-# from aiogram.filters import CommandStart, Command, CommandObject
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery
@@ -69,6 +68,12 @@ async def teacher_connect_text(message: Message, state: FSMContext):
 	await send_message_to_teacher(message)
 	await message.answer('Сообщение успешно отправлено')
 	await state.clear()
+
+
+@std.message(F.text == 'Учебные материалы')
+async def cmd_docs(message: Message):
+	await message.answer('Учебные документы и шаблоны', reply_markup=kb.docs_panel)
+
 
 
 

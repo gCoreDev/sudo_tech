@@ -1,6 +1,6 @@
 from aiogram.types import (ReplyKeyboardMarkup, KeyboardButton,
 						   InlineKeyboardMarkup, InlineKeyboardButton)
-from aiogram.utils.keyboard import ReplyKeyboardBuilder, InlineKeyboardBuilder
+from aiogram.utils.keyboard import ReplyKeyboardBuilder
 
 main = ReplyKeyboardMarkup(keyboard=[
 	[KeyboardButton(text='Личный кабинет')],
@@ -58,3 +58,12 @@ def teacher_panel():
 	for teacher_panel in key_teacher:
 		keyboard.add(KeyboardButton(text=teacher_panel))
 	return keyboard.adjust(2).as_markup(resize_keyboard=True)
+
+
+docs_panel = InlineKeyboardMarkup(inline_keyboard=[
+	[InlineKeyboardButton(text='Реферат', callback_data='Ref')],
+	[InlineKeyboardButton(text='Курсовая', callback_data='Kur')],
+	[InlineKeyboardButton(text='Отчет по практике', callback_data='Otc')],
+	[InlineKeyboardButton(text='Дипломная работа', callback_data='Dip')],
+	[InlineKeyboardButton(text='Оформление документа', callback_data='Gos')]
+])

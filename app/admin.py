@@ -1,13 +1,10 @@
 import os
 from aiogram import F, Router
-from aiogram.filters import CommandStart, Command, CommandObject
-from aiogram.types import Message, CallbackQuery
+from aiogram.filters import Command
+from aiogram.types import Message
 from aiogram.enums.parse_mode import ParseMode
-from aiogram.fsm.state import StatesGroup, State
-from aiogram.fsm.context import FSMContext
 from dotenv import load_dotenv
 import app.keyboards as kb
-from app.student import bot
 
 load_dotenv()
 

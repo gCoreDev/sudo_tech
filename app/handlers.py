@@ -24,7 +24,7 @@ async def cmd_start(message: Message):
 
 @hand.message(Command('check_list'))
 async def cmd_table(message: Message):
-    book = openpyxl.open(r".\app\data.xlsx", read_only=True)
+    book = openpyxl.open(r".\app\docs\data.xlsx", read_only=True)
     sheet = book.active
 
     output = ""

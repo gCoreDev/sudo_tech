@@ -2,7 +2,6 @@ from aiogram import Bot
 from aiogram.enums.parse_mode import ParseMode
 import os
 from aiogram import F, Router
-# from aiogram.filters import CommandStart, Command, CommandObject
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery
