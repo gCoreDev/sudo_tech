@@ -22,21 +22,29 @@ async def cmd_start(message: Message):
                          reply_markup=kb.main)
 
 
-book = openpyxl.open(r"app\data.xlsx", read_only=True)
-sheet = book.active
-
-
-@hand.message(F.text == 'Проверка таблиц')
+@hand.message(Command('check_list'))
 async def cmd_table(message: Message):
+    book = openpyxl.open(r".\app\data.xlsx", read_only=True)
+    sheet = book.active
+
     output = ""
-    for row in sheet.iter_rows():
-        row_values = [str(cell.value) for cell in row]
-        output += "| " + " | ".join(row_values) + " |\n"
-        if len(output) > 2000:
-            await message.answer("```\n" + output + "```")
-            output = ""
+
+    for row in sheet.iter_rows(min_row=1, values_only=True):
+        row_values = []
+        for cell in row:
+            if cell is not None and cell != "":
+                row_values.append(str(cell))
+        if row_values:
+            output += "| " + " | ".join(row_values) + " |\n"
+
     if output:
-        await message.answer("```\n" + output + "```")
+        parts = [output[i:i + 2000] for i in range(0, len(output), 2000)]  # разбиваем строку
+                                                                           # на части по
+                                                                           # 2000 символов
+        for part in parts:
+            await message.answer("```\n" + part + "```")  # отправляем каждую часть отдельно
+    else:
+        await message.answer("Таблица пуста или не содержит заполненных ячеек.")
 
 
 @hand.message(F.text == 'Назад')
