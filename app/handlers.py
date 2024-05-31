@@ -15,26 +15,26 @@ async def cmd_start(message: Message):
                                        action=ChatAction.TYPING)
     await asyncio.sleep(1)
     sticker = ('CAACAgIAAxkBAAJY-2ZO6Z8uCCJFRtNa-'
-             'GxqthLHlooZAAKQFQACtOXJS8_bwAcOv4PpNQQ')
+               'GxqthLHlooZAAKQFQACtOXJS8_bwAcOv4PpNQQ')
     await message.answer_sticker(sticker)
     await message.answer(f'Здраствуйте {message.from_user.username}!'
                          f' Вы находитесь в главном меню ЭнергоБота.',
                          reply_markup=kb.main)
 
 
-book = openpyxl.open('data.xlsx', read_only=True)
-
+book = openpyxl.open(r"D:\Desktop\Проекты\sudo_tech\sudo_tech\app\data.xlsx", read_only=True)
 sheet = book.active
-
-
 @hand.message(F.text == 'Проверка таблиц')
 async def cmd_table(message: Message):
     output = ""
     for row in sheet.iter_rows():
-        for cell in row:
-            output += str(cell.value) + " "
-        output += "\n"
-    await message.answer("Таблица:\n" + output)
+        row_values = [str(cell.value) for cell in row]
+        output += "| " + " | ".join(row_values) + " |\n"
+        if len(output) > 2000:
+            await message.answer("```\n" + output + "```")
+            output = ""
+    if output:
+        await message.answer("```\n" + output + "```")
 
 
 @hand.message(F.text == 'Назад')
