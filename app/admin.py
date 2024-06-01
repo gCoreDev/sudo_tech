@@ -24,14 +24,21 @@ cursor.execute('''CREATE TABLE IF NOT EXISTS users
                 (
                 id INTEGER PRIMARY KEY,
                 user_id INTEGER,
-                user_type INTEGER
+                user_fullname TEXT,
+                user_name TEXT,
+                user_type TEXT
                 )''')
 conn.commit()
 
 # Тут если нужно вручную добавляем ID пользователей
-# cursor.execute('''INSERT INTO users (user_id, user_type)
-#                 VALUES ('6592483215', '2')
+# cursor.execute('''INSERT INTO users (user_id, user_fullname, user_name, user_type)
+#                 VALUES ('7355741014','Николай Иванович','enegry200', 'teacher')
 #                 ''')
+# conn.commit()
+# conn.close()
+
+# Если нужно кого-то удалить из базы
+# cursor.execute("DELETE FROM users WHERE user_id = '529088802'")
 # conn.commit()
 # conn.close()
 
@@ -44,21 +51,34 @@ async def cmd_admin(message: Message):
 
 
 @admin.message(F.text == 'Личный кабинет')
-async def per_acc_adm(message: Message):
-    if ADMIN_ID == message.from_user.id:
-        await message.answer('Вы в админ панели',
-                             reply_markup=kb.admin_panel())
-    elif STUDENT_ID == message.from_user.id:
-        await message.answer(f'Добро пожаловать,'
-                             f' {message.from_user.full_name}, студент!',
-                             reply_markup=kb.std_panel())
-    elif TEACHER_ID == message.from_user.id:
-        await message.answer(f'Добро пожаловать преподаватель,'
-                             f' <b>{message.from_user.full_name}!</b>',
-                             parse_mode=ParseMode('HTML'),
-                             reply_markup=kb.teacher_panel())
+async def personal_account(message: Message):
+    user_id = message.from_user.id
+    cursor.execute("SELECT user_type FROM users WHERE user_id=?", (user_id,))
+    user = cursor.fetchone()
+
+    if user:
+        user_type = user[0]
+        if user_type == 'admin':
+            await message.answer('Вы в админ панели',
+                                 reply_markup=kb.admin_panel())
+        elif user_type == 'student':
+            await message.answer(f'Добро пожаловать,'
+                                 f' {message.from_user.full_name}, студент!',
+                                 reply_markup=kb.std_panel())
+        elif user_type == 'teacher':
+            await message.answer(f'Добро пожаловать преподаватель,'
+                                 f' <b>{message.from_user.full_name}!</b>',
+                                 parse_mode=ParseMode('HTML'),
+                                 reply_markup=kb.teacher_panel())
+        else:
+            await message.answer(f'К сожалению, вы не можете воспользоваться личным кабинетом')
     else:
-        await message.answer('Вы отсутствуете в списках ЭнергоБота')
+        await message.answer(f'Дорогой гость, {message.from_user.full_name}, вы находитесь в главном меню!')
+        user_fullname = message.from_user.full_name
+        user_name = message.from_user.username
+        cursor.execute("INSERT INTO users (user_id, user_fullname, user_name, user_type) VALUES (?, ?, ?, ?)",
+                       (user_id, user_fullname, user_name, 'guest'))
+        conn.commit()
 
 # class Broadcast(StatesGroup):
 #     wait_broadcast_message = State()
@@ -79,3 +99,27 @@ async def per_acc_adm(message: Message):
 #     await send_broadcast_all(message)
 #     await message.answer('Сообщение успешно отправлено')
 #     await state.clear()
+
+
+@admin.message(Command('show_users'))
+async def cmd_show_users(message: Message):
+    user_id = message.from_user.id
+    cursor.execute("SELECT user_type FROM users WHERE user_id=?", (user_id,))
+    user = cursor.fetchone()
+    if user:
+        user_type = user[0]
+        if user_type == 'admin':
+            cursor.execute("SELECT * FROM users")
+            users = cursor.fetchall()
+            user_list = 'Список пользователей ЭнергоБота\n'
+            for user in users:
+                user_list += " | ".join(str(col) for col in user) + "\n"
+            await message.answer(user_list)
+        else:
+            await message.reply('У вас нет доступа к этой команде!')
+    else:
+        await message.answer('Если вы видите это сообщение, то по какой-то причине - вас не в базе')
+
+@admin.message(F.text == 'Показать пользователей')
+async def cmd_show_users_text(message: Message):
+    await cmd_show_users(message)
