@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 import app.keyboards as kb
+import sqlite3
 
 load_dotenv()
 
@@ -16,6 +17,23 @@ ADMIN_ID = int(os.getenv('ADMIN_ID'))
 STUDENT_ID = int(os.getenv('STUDENT_ID'))
 TEACHER_ID = int(os.getenv('TEACHER_ID'))
 
+conn = sqlite3.connect('app/docs/data_base/users.db')
+cursor = conn.cursor()
+
+cursor.execute('''CREATE TABLE IF NOT EXISTS users
+                (
+                id INTEGER PRIMARY KEY,
+                user_id INTEGER,
+                user_type INTEGER
+                )''')
+conn.commit()
+
+# Тут если нужно вручную добавляем ID пользователей
+# cursor.execute('''INSERT INTO users (user_id, user_type)
+#                 VALUES ('6592483215', '2')
+#                 ''')
+# conn.commit()
+# conn.close()
 
 @admin.message(Command('admin'))
 async def cmd_admin(message: Message):
@@ -41,7 +59,6 @@ async def per_acc_adm(message: Message):
                              reply_markup=kb.teacher_panel())
     else:
         await message.answer('Вы отсутствуете в списках ЭнергоБота')
-
 
 # class Broadcast(StatesGroup):
 #     wait_broadcast_message = State()
