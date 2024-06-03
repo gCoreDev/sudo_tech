@@ -1,11 +1,11 @@
 import os
-from aiogram import F, Router, Bot
-from aiogram.filters import Command
+from aiogram import F, Router
+from aiogram.filters import Command, CommandObject
 from aiogram.types import Message
 from aiogram.enums.parse_mode import ParseMode
 from dotenv import load_dotenv
-from aiogram.fsm.context import FSMContext
-from aiogram.fsm.state import State, StatesGroup
+# from aiogram.fsm.context import FSMContext
+# from aiogram.fsm.state import State, StatesGroup
 import app.keyboards as kb
 import sqlite3
 
@@ -44,7 +44,7 @@ conn.commit()
 
 @admin.message(Command('admin'))
 async def cmd_admin(message: Message):
-    if ADMIN_ID == message.from_user.id:
+    if await is_admin(message.from_user.id):
         await message.answer('Вы в админ панели!', reply_markup=kb.admin_panel())
     else:
         await message.answer('В доступе отказано!')
@@ -55,7 +55,6 @@ async def personal_account(message: Message):
     user_id = message.from_user.id
     cursor.execute("SELECT user_type FROM users WHERE user_id=?", (user_id,))
     user = cursor.fetchone()
-
     if user:
         user_type = user[0]
         if user_type == 'admin':
@@ -103,23 +102,56 @@ async def personal_account(message: Message):
 
 @admin.message(Command('show_users'))
 async def cmd_show_users(message: Message):
-    user_id = message.from_user.id
-    cursor.execute("SELECT user_type FROM users WHERE user_id=?", (user_id,))
-    user = cursor.fetchone()
-    if user:
-        user_type = user[0]
-        if user_type == 'admin':
-            cursor.execute("SELECT * FROM users")
-            users = cursor.fetchall()
-            user_list = 'Список пользователей ЭнергоБота\n'
-            for user in users:
-                user_list += " | ".join(str(col) for col in user) + "\n"
-            await message.answer(user_list)
-        else:
-            await message.reply('У вас нет доступа к этой команде!')
+    if await is_admin(message.from_user.id):
+        cursor.execute("SELECT * FROM users")
+        users = cursor.fetchall()
+        user_list = 'Список пользователей ЭнергоБота\n'
+        for user in users:
+            user_list += " | ".join(str(col) for col in user) + "\n"
+        await message.answer(user_list)
     else:
-        await message.answer('Если вы видите это сообщение, то по какой-то причине - вас не в базе')
+        await message.reply('У вас нет доступа к этой команде!')
 
 @admin.message(F.text == 'Показать пользователей')
 async def cmd_show_users_text(message: Message):
     await cmd_show_users(message)
+
+
+async def is_admin(user_id):
+    cursor.execute("SELECT user_type FROM users WHERE user_id=?", (user_id,))
+    result = cursor.fetchone()
+    if result and result[0] == 'admin':
+        return True
+    else:
+        return False
+
+
+@admin.message(Command('edit'))
+async def edit_user(message: Message):
+    if await is_admin(message.from_user.id):
+        # Разбираем аргументы команды
+        args = message.text.split()[1:]
+        if len(args) == 2:
+            user_id = int(args[0])
+            new_user_type = args[1]
+
+            # Проверяем, что пользователь не пытается изменить свой тип
+            if user_id == message.from_user.id:
+                await message.reply("Вы не можете изменить свой тип пользователя!")
+                return
+
+            valid_user_types = ['guest', 'student', 'teacher', 'admin']
+            if new_user_type not in valid_user_types:
+                await message.reply("Недопустимый тип пользователя. Используйте: guest, student, teacher, admin")
+                return
+
+            # Обновляем тип пользователя в базе данных
+            cursor.execute("UPDATE users SET user_type = ? WHERE user_id = ?", (new_user_type, user_id))
+            conn.commit()
+
+            # Отправляем сообщение об успешном изменении
+            await message.reply(f"Тип пользователя с ID {user_id} был изменен на {new_user_type}.")
+        else:
+            await message.reply("Неверный формат команды. Используйте: /edit_user <user_id> <user_type>")
+    else:
+        await message.reply("Извините, но у вас нет прав для использования этой команды.")
