@@ -169,7 +169,42 @@ async def cmd_edit(message: Message):
         else:
             await message.reply("Неверный формат команды. Используйте: /edit <user_id> <user_type>")
     else:
-        await message.reply("Извините, но у вас нет прав для использования этой команды.")
+        await message.reply("У вас нет прав для использования этой команды!")
 
+
+@admin.message(F.text == 'Удалить пользователя')
+async def cmd_del_text(message: Message):
+    await message.reply(f'Чтобы удалить пользователя, напишите следующее: <b>/del_user (id пользователя)</b>',
+                        parse_mode=ParseMode.HTML)
+
+
+@admin.message(Command('del'))
+async def cmd_del(message: Message):
+    # Проверяем, является ли пользователь администратором
+    if await is_admin(message.from_user.id):
+        args = message.text.split()[1:]  # Получаем аргументы команды, исключая саму команду
+        if len(args) != 1:
+            await message.answer("Неверный формат команды. Используйте: /del_user <id>")
+            return
+
+        del_user_id = int(args[0])
+
+        if del_user_id == message.from_user.id:
+            await message.answer("Вы не можете удалить свой собственный ID.")
+            return
+
+        # Проверяем существование пользователя с указанным del_user_id
+        cursor.execute("SELECT 1 FROM users WHERE user_id=?", (del_user_id,))
+        existing_user = cursor.fetchone()
+        if not existing_user:
+            await message.answer(f"Пользователь с ID {del_user_id} не найден в базе данных.")
+            return
+
+        # Удаляем пользователя из базы данных
+        cursor.execute("DELETE FROM users WHERE user_id=?", (del_user_id,))
+        conn.commit()
+        await message.answer(f"Пользователь с ID {del_user_id} успешно удален из базы данных.")
+    else:
+        await message.reply('У вас нет прав использовать данную команду!')
 
 
