@@ -107,8 +107,8 @@ async def cmd_show_users(message: Message):
         users = cursor.fetchall()
         user_list = 'Список пользователей ЭнергоБота\n'
         for user in users:
-            user_list += " | ".join(str(col) for col in user) + "\n"
-        await message.answer(user_list)
+            user_list += " | ".join(f"<code>{col}</code>" for col in user) + "\n"
+        await message.answer(user_list, parse_mode=ParseMode.HTML)
     else:
         await message.reply('У вас нет доступа к этой команде!')
 
