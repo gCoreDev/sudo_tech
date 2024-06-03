@@ -126,13 +126,22 @@ async def is_admin(user_id):
         return False
 
 
+@admin.message(F.text == 'Изменить тип пользователя')
+async def cmd_edit_text(message: Message):
+    await message.reply('Введите команду в формате /edit <id пользователя> <тип пользователя>\n'
+                        'Администратор - admin \n'
+                        'Студент - student \n'
+                        'Преподаватель - teacher \n'
+                        'Гость - guest')
+
+
 @admin.message(Command('edit'))
-async def edit_user(message: Message):
+async def cmd_edit(message: Message):
     if await is_admin(message.from_user.id):
         # Разбираем аргументы команды
         args = message.text.split()[1:]
         if len(args) == 2:
-            user_id = int(args[0])
+            user_id = args[0]
             new_user_type = args[1]
 
             # Проверяем, что пользователь не пытается изменить свой тип
@@ -145,6 +154,12 @@ async def edit_user(message: Message):
                 await message.reply("Недопустимый тип пользователя. Используйте: guest, student, teacher, admin")
                 return
 
+            # Проверяем, что пользователь с указанным ID существует
+            cursor.execute("SELECT * FROM users WHERE user_id = ?", (user_id,))
+            if not cursor.fetchone():
+                await message.reply("Такого ID пользователя не найдено. Попробуйте еще раз.")
+                return
+
             # Обновляем тип пользователя в базе данных
             cursor.execute("UPDATE users SET user_type = ? WHERE user_id = ?", (new_user_type, user_id))
             conn.commit()
@@ -152,6 +167,9 @@ async def edit_user(message: Message):
             # Отправляем сообщение об успешном изменении
             await message.reply(f"Тип пользователя с ID {user_id} был изменен на {new_user_type}.")
         else:
-            await message.reply("Неверный формат команды. Используйте: /edit_user <user_id> <user_type>")
+            await message.reply("Неверный формат команды. Используйте: /edit <user_id> <user_type>")
     else:
         await message.reply("Извините, но у вас нет прав для использования этой команды.")
+
+
+

@@ -19,7 +19,7 @@ group = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text='Перейти в канал колледжа:', url='https://t.me/EnergyCollege')]
 ])
 
-data = ('Показать пользователей', 'Добавить пользователя',
+data = ('Показать пользователей', 'Изменить тип пользователя',
         'Удалить пользователя', 'Сделать рассылку', 'Назад')
 
 answer = InlineKeyboardMarkup(inline_keyboard=[
