@@ -67,3 +67,9 @@ docs_panel = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text='Дипломная работа', callback_data='Dip')],
     [InlineKeyboardButton(text='Оформление документа', callback_data='Gos')]
 ])
+
+
+desk_question = InlineKeyboardMarkup(inline_keyboard=[
+    [InlineKeyboardButton(text='Посмотреть расписание', callback_data='desk_check'),
+     InlineKeyboardButton(text='Загрузить расписание', callback_data='desk_upload')]
+])

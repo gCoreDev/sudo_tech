@@ -13,12 +13,12 @@ load_dotenv()
 
 admin = Router()
 
-ADMIN_ID = int(os.getenv('ADMIN_ID'))
 STUDENT_ID = int(os.getenv('STUDENT_ID'))
 TEACHER_ID = int(os.getenv('TEACHER_ID'))
 
 conn = sqlite3.connect('app/docs/data_base/users.db')
 cursor = conn.cursor()
+
 
 cursor.execute('''CREATE TABLE IF NOT EXISTS users
                 (
@@ -42,12 +42,11 @@ conn.commit()
 # conn.commit()
 # conn.close()
 
+
 @admin.message(Command('admin'))
 async def cmd_admin(message: Message):
-    if await is_admin(message.from_user.id):
-        await message.answer('Вы в админ панели!', reply_markup=kb.admin_panel())
-    else:
-        await message.answer('В доступе отказано!')
+    if is_admin(message.from_user.id):
+        await message.answer('Привет, админ!')
 
 
 @admin.message(F.text == 'Личный кабинет')
