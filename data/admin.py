@@ -16,7 +16,7 @@ admin = Router()
 STUDENT_ID = int(os.getenv('STUDENT_ID'))
 TEACHER_ID = int(os.getenv('TEACHER_ID'))
 
-conn = sqlite3.connect('data/docs/data_base/users.db')
+conn = sqlite3.connect('/data/docs/data_base/users.db')
 cursor = conn.cursor()
 
 
