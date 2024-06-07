@@ -6,12 +6,12 @@ from aiogram import Bot, Dispatcher
 
 from dotenv import load_dotenv
 
-from app.handlers import hand
-from app.admin import admin
-from app.student import std
-from app.teacher import teach
-from app.send_files import file
-from app.desk_hand import desk
+from data.handlers import hand
+from data.admin import admin
+from data.student import std
+from data.teacher import teach
+from data.send_files import file
+from data.desk_hand import desk
 
 
 ADMIN_ID = int(os.getenv('ADMIN_ID'))

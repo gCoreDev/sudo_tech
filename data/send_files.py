@@ -7,7 +7,7 @@ file = Router()
 
 @file.callback_query(F.data == 'Ref')
 async def send_file(callback: CallbackQuery):
-	doc = FSInputFile('app/docs/Doclad.docx',
+	doc = FSInputFile('data/docs/Doclad.docx',
 					  'Доклад.docx')
 	await callback.answer('Файл получен')
 	await callback.message.delete_reply_markup()
@@ -17,7 +17,7 @@ async def send_file(callback: CallbackQuery):
 
 @file.callback_query(F.data == 'Kur')
 async def send_file(callback: CallbackQuery):
-	doc = FSInputFile('app/docs/Kursovaya.docx',
+	doc = FSInputFile('data/docs/Kursovaya.docx',
 					  'Курсовая.docx')
 	await callback.answer('Файл получен')
 	await callback.message.delete_reply_markup()
@@ -27,7 +27,7 @@ async def send_file(callback: CallbackQuery):
 
 @file.callback_query(F.data == 'Otc')
 async def send_file(callback: CallbackQuery):
-	doc = FSInputFile('app/docs/Practica.docx',
+	doc = FSInputFile('data/docs/Practica.docx',
 					  'Отчет по практике.docx')
 	await callback.answer('Файл получен')
 	await callback.message.delete_reply_markup()
@@ -37,7 +37,7 @@ async def send_file(callback: CallbackQuery):
 
 @file.callback_query(F.data == 'Dip')
 async def send_file(callback: CallbackQuery):
-	doc = FSInputFile('app/docs/Diplom.docx',
+	doc = FSInputFile('data/docs/Diplom.docx',
 					  'Дипломная работа.docx')
 	await callback.answer('Файл получен')
 	await callback.message.delete_reply_markup()
@@ -47,7 +47,7 @@ async def send_file(callback: CallbackQuery):
 
 @file.callback_query(F.data == 'Gos')
 async def send_file(callback: CallbackQuery):
-	doc = FSInputFile('app/docs/Gost.pdf',
+	doc = FSInputFile('data/docs/Gost.pdf',
 					  'Оформление документа.docx')
 	await callback.answer('Файл получен')
 	await callback.message.delete_reply_markup()

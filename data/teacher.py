@@ -6,7 +6,7 @@ from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery
 from dotenv import load_dotenv
-import app.keyboards as kb
+import data.keyboards as kb
 import sqlite3
 
 load_dotenv()
@@ -17,7 +17,7 @@ ADMIN_ID = int(os.getenv('ADMIN_ID'))
 TEACHER_ID = int(os.getenv('TEACHER_ID'))
 
 teach = Router()
-conn = sqlite3.connect('app/docs/data_base/users.db')
+conn = sqlite3.connect('data/docs/data_base/users.db')
 cursor = conn.cursor()
 
 
