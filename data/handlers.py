@@ -3,7 +3,7 @@ from aiogram import Bot, F, Router
 from aiogram.filters import CommandStart, Command, CommandObject, StateFilter
 from aiogram.types import Message, CallbackQuery
 from aiogram.enums import ChatAction
-import app.keyboards as kb
+import data.keyboards as kb
 import openpyxl
 
 hand = Router()

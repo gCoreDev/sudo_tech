@@ -4,7 +4,7 @@ from aiogram.filters import Command
 from aiogram.types import Message
 from aiogram.enums.parse_mode import ParseMode
 from dotenv import load_dotenv
-import app.keyboards as kb
+import data.keyboards as kb
 
 load_dotenv()
 

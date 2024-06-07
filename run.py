@@ -11,7 +11,6 @@ from data.admin import admin
 from data.student import std
 from data.teacher import teach
 from data.send_files import file
-from data.desk_hand import desk
 
 
 ADMIN_ID = int(os.getenv('ADMIN_ID'))
@@ -21,7 +20,7 @@ async def main():
     load_dotenv()
     bot = Bot(token=os.getenv('TOKEN'))
     dp = Dispatcher()
-    dp.include_routers(hand, admin, std, teach, file, desk)
+    dp.include_routers(hand, admin, std, teach, file)
     await bot.send_message(ADMIN_ID, 'Бот запущен')
     await dp.start_polling(bot)
 
