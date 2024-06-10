@@ -13,6 +13,19 @@ hand = Router()
 cur = conn.cursor()
 
 
+cur.execute('''
+                CREATE TABLE IF NOT EXISTS users
+                (
+                    id INTEGER PRIMARY KEY,
+                    user_id INTEGER,
+                    user_full_name TEXT,
+                    user_username TEXT,
+                    user_type TEXT	
+                )
+                ''')
+conn.commit()
+
+
 @hand.message(CommandStart())
 async def cmd_start(message: Message):
     await message.bot.send_chat_action(chat_id=message.from_user.id,
@@ -21,21 +34,43 @@ async def cmd_start(message: Message):
     sticker = ('CAACAgIAAxkBAAJY-2ZO6Z8uCCJFRtNa-'
                'GxqthLHlooZAAKQFQACtOXJS8_bwAcOv4PpNQQ')
     await message.answer_sticker(sticker)
-    await message.answer(f'Здраствуйте {message.from_user.username}!'
-                         f' Вы находитесь в главном меню ЭнергоБота.',
-                         reply_markup=kb.main)
     user_id = message.from_user.id
     user_full_name = message.from_user.full_name
     user_username = message.from_user.username
-    cur.execute('INSERT INTO users (user_id, user_full_name, user_username, user_type)'
-                'VALUES (?, ?, ?, ?)', (user_id, user_full_name, user_username, 'guest'))
-    conn.commit()
-    await message.answer('Добро пожаловать гость! Вы находитесь в главном меню', reply_markup=kb.main)
+
+    # Проверяем, существует ли пользователь в базе данных
+    cur.execute("SELECT * FROM users WHERE user_id = ?", (user_id,))
+    if cur.fetchone() is None:
+        # Если пользователь не существует, добавляем его в базу данных
+        cur.execute('INSERT INTO users (user_id, user_full_name, user_username, user_type)'
+                    'VALUES (?, ?, ?, ?)', (user_id, user_full_name, user_username, 'guest'))
+        conn.commit()
+        await message.answer('Добро пожаловать гость Вы находитесь в главном меню', reply_markup=kb.main)
+    else:
+        # Если пользователь уже существует, отправляем сообщение о входе
+        # await message.answer(f'Добро пожаловать {user_type} Вы находитесь в главном меню', reply_markup=kb.main)
+        user_id = message.from_user.id
+        cur.execute('SELECT user_type FROM users WHERE user_id=?', (user_id,))
+        user = cur.fetchone()
+        if user:
+            user_type = user[0]
+            if user_type == 'admin':
+                await message.answer(f'Добро пожаловать, администратор {message.from_user.full_name},'
+                                     f' Вы находитесь в главном меню', reply_markup=kb.main)
+            elif user_type == 'student':
+                await message.answer(f'Добро пожаловать, студент {message.from_user.full_name},'
+                                     f' Вы находитесь в главном меню', reply_markup=kb.main)
+            elif user_type == 'teacher':
+                await message.answer(f'Добро пожаловать, преподаватель {message.from_user.full_name},'
+                                     f' Вы находитесь в главном меню', reply_markup=kb.main)
+            else:
+                await message.answer(f'Добро пожаловать, гость, {message.from_user.full_name}'
+                                     f' Вы находитесь в главном меню', reply_markup=kb.main)
 
 
 @hand.message(Command('check_list'))
 async def cmd_table(message: Message):
-    book = openpyxl.open(r".\app\docs\data.xlsx", read_only=True)
+    book = openpyxl.open(r".\data\docs\data.xlsx", read_only=True)
     sheet = book.active
 
     output = ""

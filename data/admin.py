@@ -19,27 +19,6 @@ conn = sqlite3.connect('data/docs/data_base/users.db')
 cur = conn.cursor()
 
 
-cur.execute('''
-                CREATE TABLE IF NOT EXISTS users
-                (
-                    id INTEGER PRIMARY KEY,
-                    user_id INTEGER,
-                    user_full_name TEXT,
-                    user_username TEXT,
-                    user_type TEXT	
-                )
-                ''')
-conn.commit()
-
-
-@admin.message(Command('admin'))
-async def cmd_admin(message: Message):
-    if ADMIN_ID == message.from_user.id:
-        await message.answer('Вы в админ панели!')
-    else:
-        await message.answer('В доступе отказано!')
-
-
 @admin.message(F.text == 'Личный кабинет')
 async def per_acc_adm(message: Message):
     user_id = message.from_user.id
@@ -119,3 +98,14 @@ async def cmd_edit(message: Message):
             await message.reply("Неверный формат команды. Используйте: /edit_user <user_id> <user_type>")
     else:
         await message.reply("Извините, но у вас нет прав для использования этой команды.")
+
+
+@admin.message(F.text == 'Показать пользователей')
+async def cmd_text_users(message: Message):
+    await cmd_users(message)
+
+
+@admin.message(F.text == 'Изменить тип пользователя')
+async def cmd_text_edit(message: Message):
+    await message.reply('Чтобы изменить тип учетной записи пользователя, напиши следующую команду \n'
+                        '/edit <id пользователя> <тип пользователя>')
