@@ -5,8 +5,12 @@ from aiogram.types import Message, CallbackQuery
 from aiogram.enums import ChatAction
 import data.keyboards as kb
 import openpyxl
+import sqlite3
+
+conn = sqlite3.connect('data/docs/data_base/users.db')
 
 hand = Router()
+cur = conn.cursor()
 
 
 @hand.message(CommandStart())
@@ -20,6 +24,13 @@ async def cmd_start(message: Message):
     await message.answer(f'Здраствуйте {message.from_user.username}!'
                          f' Вы находитесь в главном меню ЭнергоБота.',
                          reply_markup=kb.main)
+    user_id = message.from_user.id
+    user_full_name = message.from_user.full_name
+    user_username = message.from_user.username
+    cur.execute('INSERT INTO users (user_id, user_full_name, user_username, user_type)'
+                'VALUES (?, ?, ?, ?)', (user_id, user_full_name, user_username, 'guest'))
+    conn.commit()
+    await message.answer('Добро пожаловать гость! Вы находитесь в главном меню', reply_markup=kb.main)
 
 
 @hand.message(Command('check_list'))
