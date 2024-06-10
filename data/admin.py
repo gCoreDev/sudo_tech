@@ -41,7 +41,7 @@ async def per_acc_adm(message: Message):
                                  parse_mode=ParseMode('HTML'),
                                  reply_markup=kb.teacher_panel())
         else:
-            await message.answer('У вас нет доступа к личному кабинету! Если вы студент или преподаватель колледжа,'
+            await message.answer('⚠️ У вас нет доступа к личному кабинету! Если вы студент или преподаватель колледжа,'
                                  'обратитесь к своему куратору')
 
 
@@ -73,14 +73,14 @@ async def cmd_edit(message: Message):
             try:
                 user_id = int(args[0])
             except ValueError:
-                await message.reply("Неверный формат ID пользователя. ID должен быть целым числом.")
+                await message.reply("‼️Неверный формат ID пользователя. ID должен быть целым числом.")
                 return
 
             new_user_type = args[1]
 
             # Проверяем, что пользователь не пытается изменить свой тип
             if user_id == message.from_user.id:
-                await message.reply("Вы не можете изменить свой тип пользователя!")
+                await message.reply("‼️Вы не можете изменить свой тип пользователя!")
                 return
 
             # Обновляем тип пользователя в базе данных
@@ -89,15 +89,48 @@ async def cmd_edit(message: Message):
 
             valid_user_types = ['guest', 'student', 'teacher', 'admin']
             if new_user_type not in valid_user_types:
-                await message.reply("Недопустимый тип пользователя. Используйте: guest, student, teacher, admin")
+                await message.reply("‼️Недопустимый тип пользователя. Используйте: guest, student, teacher, admin")
                 return
 
             # Отправляем сообщение об успешном изменении
-            await message.reply(f"Тип пользователя с ID {user_id} был изменен на {new_user_type}.")
+            await message.reply(f"✅ Тип пользователя с ID {user_id} был изменен на {new_user_type}.")
         else:
             await message.reply("Неверный формат команды. Используйте: /edit_user <user_id> <user_type>")
     else:
-        await message.reply("Извините, но у вас нет прав для использования этой команды.")
+        await message.reply("⚠️ У вас нет прав для использования этой команды! ")
+
+
+@admin.message(Command('del'))
+async def cmd_del(message: Message):
+    user_id = message.from_user.id
+    cur.execute("SELECT user_type FROM users WHERE user_id=?", (user_id,))
+    user = cur.fetchone()
+    if not user or user[0] != 'admin':
+        await message.answer("⚠️ У вас нет прав для использования этой команды!")
+        return
+
+    args = message.text.split()[1:]  # Получаем аргументы команды, исключая саму команду
+    if len(args) != 1:
+        await message.answer("‼️Неверный формат команды. Используйте: /del_user (id)")
+        return
+
+    del_user_id = int(args[0])
+
+    if del_user_id == user_id:
+        await message.answer("‼️Вы не можете удалить свой собственный ID.")
+        return
+
+    # Проверяем существование пользователя с указанным del_user_id
+    cur.execute("SELECT 1 FROM users WHERE user_id=?", (del_user_id,))
+    existing_user = cur.fetchone()
+    if not existing_user:
+        await message.answer(f"‼️Пользователь с ID {del_user_id} не найден в базе данных.")
+        return
+
+    # Удаляем пользователя из базы данных
+    cur.execute("DELETE FROM users WHERE user_id=?", (del_user_id,))
+    conn.commit()
+    await message.answer(f"✅ Пользователь с ID {del_user_id} успешно удален из базы данных.")
 
 
 @admin.message(F.text == 'Показать пользователей')
@@ -107,5 +140,11 @@ async def cmd_text_users(message: Message):
 
 @admin.message(F.text == 'Изменить тип пользователя')
 async def cmd_text_edit(message: Message):
-    await message.reply('Чтобы изменить тип учетной записи пользователя, напиши следующую команду \n'
-                        '/edit <id пользователя> <тип пользователя>')
+    await message.reply('Чтобы изменить тип учетной записи пользователя, напишите следующую команду \n'
+                        '/edit (id пользователя) (тип пользователя)')
+
+
+@admin.message(F.text == 'Удалить пользователя')
+async def cmd_text_del(message: Message):
+    await message.reply('Чтобы удалить запись пользователя, напишите следующую команду \n'
+                        '/del (id пользователя)')
