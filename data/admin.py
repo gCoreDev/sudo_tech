@@ -1,7 +1,9 @@
 import os
-from aiogram import F, Router
+from aiogram import F, Router, Bot
 from aiogram.filters import Command
 from aiogram.types import Message
+from aiogram.fsm.state import State, StatesGroup
+from aiogram.fsm.context import FSMContext
 from aiogram.enums.parse_mode import ParseMode
 from dotenv import load_dotenv
 import data.keyboards as kb
@@ -14,6 +16,7 @@ admin = Router()
 ADMIN_ID = int(os.getenv('ADMIN_ID'))
 STUDENT_ID = int(os.getenv('STUDENT_ID'))
 TEACHER_ID = int(os.getenv('TEACHER_ID'))
+bot = Bot(token=os.getenv('TOKEN'))
 
 conn = sqlite3.connect('data/docs/data_base/users.db')
 cur = conn.cursor()
@@ -51,8 +54,8 @@ async def cmd_users(message: Message):
     users = cur.fetchall()
     user_list = 'Список пользователей\n'
     for user in users:
-        user_list += ' | '.join(str(col) for col in user) + "\n"
-    await message.answer(user_list)
+        user_list += ' | '.join(f'`{col}`' for col in user) + "\n"
+    await message.answer(user_list, parse_mode=ParseMode.MARKDOWN)
 
 
 async def is_admin(user_id):
@@ -148,3 +151,40 @@ async def cmd_text_edit(message: Message):
 async def cmd_text_del(message: Message):
     await message.reply('Чтобы удалить запись пользователя, напишите следующую команду \n'
                         '/del (id пользователя)')
+
+
+class SendMessage(StatesGroup):
+    awaiting_message = State()
+
+
+def get_all_user_ids():
+    cur.execute("SELECT user_id FROM users")
+    user_ids = [row[0] for row in cur.fetchall()]
+    return user_ids
+
+
+async def send_message_to_all(message: Message):
+    user_ids = get_all_user_ids()
+    for user_id in user_ids:
+        await bot.send_message(user_id, f'Сообщение от админа\n{message.text}')
+
+
+@admin.message(F.text == 'Сделать рассылку')
+async def send_message(message: Message, state: FSMContext):
+    if await is_admin(message.from_user.id):
+        await state.update_data(awaiting_message=message.text)
+        await state.set_state(SendMessage.awaiting_message)
+        await message.reply('Напишите ваше сообщение для всех пользователей')
+    else:
+        await message.answer('У вас недостаточно прав!')
+
+
+@admin.message(SendMessage.awaiting_message)
+async def text_send_message(message: Message, state: FSMContext):
+    if message.text.startswith('Сделать рассылку'):
+        return
+    await send_message_to_all(message)
+    await message.answer('Сообщение успешно отправлено')
+    await state.clear()
+
+
