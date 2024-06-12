@@ -1,7 +1,7 @@
 import asyncio
 from aiogram import Bot, F, Router
 from aiogram.filters import CommandStart, Command, CommandObject, StateFilter
-from aiogram.types import Message, CallbackQuery
+from aiogram.types import Message, CallbackQuery, URLInputFile
 from aiogram.enums import ChatAction
 import data.keyboards as kb
 import openpyxl
@@ -31,9 +31,9 @@ async def cmd_start(message: Message):
     await message.bot.send_chat_action(chat_id=message.from_user.id,
                                        action=ChatAction.TYPING)
     await asyncio.sleep(1)
-    sticker = ('CAACAgIAAxkBAAJY-2ZO6Z8uCCJFRtNa-'
-               'GxqthLHlooZAAKQFQACtOXJS8_bwAcOv4PpNQQ')
-    await message.answer_sticker(sticker)
+    await message.answer_photo(photo=
+                               'https://lh3.googleusercontent.com/'
+                               'p/AF1QipM8MkG4sv0a2Fk-hQYESG-H3A5rmjC9Y68GLEhi=w600-k')
     user_id = message.from_user.id
     user_full_name = message.from_user.full_name
     user_username = message.from_user.username

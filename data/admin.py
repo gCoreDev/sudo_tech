@@ -86,6 +86,12 @@ async def cmd_edit(message: Message):
                 await message.reply("‼️Вы не можете изменить свой тип пользователя!")
                 return
 
+            # Проверяем, что пользователь существует в базе данных
+            cur.execute("SELECT * FROM users WHERE user_id = ?", (user_id,))
+            if not cur.fetchone():
+                await message.reply(f"‼️Пользователь с ID {user_id} не найден в базе данных.")
+                return
+
             # Обновляем тип пользователя в базе данных
             cur.execute("UPDATE users SET user_type = ? WHERE user_id = ?", (new_user_type, user_id))
             conn.commit()
@@ -100,7 +106,7 @@ async def cmd_edit(message: Message):
         else:
             await message.reply("Неверный формат команды. Используйте: /edit_user <user_id> <user_type>")
     else:
-        await message.reply("⚠️ У вас нет прав для использования этой команды! ")
+        await message.reply("⚠️ У вас нет прав для использования этой команды ")
 
 
 @admin.message(Command('del'))
