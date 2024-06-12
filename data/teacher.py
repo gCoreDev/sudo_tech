@@ -64,7 +64,7 @@ async def data_upload_week_plan(callback: CallbackQuery):
     await callback.message.answer('Чтобы загрузить расписание, отправьте мне файл в формате .xlxs')
 
 
-@teach.callback_quer(F.data == 'check_week_data')
+@teach.callback_query(F.data == 'check_week_data')
 async def data_check_week_data(callback: CallbackQuery):
     await callback.answer('')
     await callback.message.answer('<b>Расписание на понедельник:</b>\n'
