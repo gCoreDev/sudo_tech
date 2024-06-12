@@ -50,7 +50,7 @@ def std_panel():
     return keyboard.adjust(2).as_markup(resize_keyboard=True)
 
 
-key_teacher = ('Создать тест', 'Расписание', 'Рассылка группе', 'Связь с админом')
+key_teacher = ('Создать тест', 'Расписание', 'Рассылка группе', 'Связь с админом','Назад')
 
 
 def teacher_panel():
@@ -66,4 +66,14 @@ docs_panel = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text='Отчет по практике', callback_data='Otc')],
     [InlineKeyboardButton(text='Дипломная работа', callback_data='Dip')],
     [InlineKeyboardButton(text='Оформление документа', callback_data='Gos')]
+])
+
+week_plan = InlineKeyboardMarkup(inline_keyboard=[
+    [
+        InlineKeyboardButton(text='Загрузить', callback_data='upload_week_plan'),
+        InlineKeyboardButton(text='Посмотреть', callback_data='check_week_plan')
+    ],
+    [
+        InlineKeyboardButton(text='Удалить', callback_data='del_week_plan')
+    ]
 ])

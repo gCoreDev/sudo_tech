@@ -46,3 +46,9 @@ async def teacher_response(message: Message, state: FSMContext):
 	await send_message_to_student(message)
 	await message.answer('Ответ успешно отправлен')
 	await state.clear()
+
+
+@teach.message(F.text == 'Расписание')
+async def week_plan(message: Message):
+	await message.answer('Выберите действие над расписанием', reply_markup=kb.week_plan)
+
