@@ -69,7 +69,7 @@ async def data_check_week_data(callback: CallbackQuery):
     await callback.answer('')
     await callback.message.answer('<b>Расписание на понедельник:</b>\n'
                                   '1) Математика - Николай И.Н. 301 каб \n'
-                                  '2) Русский язык - Иванова А.М. 105 каб.'
+                                  '2) Русский язык - Иванова А.М. 105 каб.\n'
                                   '3) Информатика - Лебедев Н.О. 224 каб.\n'
                                   '4) Физукультура - Елисеев А.П. 111 каб.',
                                   parse_mode=ParseMode.HTML)
