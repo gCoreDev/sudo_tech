@@ -75,6 +75,15 @@ async def cmd_docs(message: Message):
 	await message.answer('Учебные документы и шаблоны', reply_markup=kb.docs_panel)
 
 
+@std.message(F.text == 'Расписание пар')
+async def text_week_plan(message: Message):
+	await message.answer('<b>Расписание на понедельник:</b>\n'
+								  '1) Математика - Николай И.Н. 301 каб \n'
+								  '2) Русский язык - Иванова А.М. 105 каб.\n'
+								  '3) Информатика - Лебедев Н.О. 224 каб.\n'
+								  '4) Физукультура - Елисеев А.П. 111 каб.',
+								  parse_mode=ParseMode.HTML)
+
 
 
 

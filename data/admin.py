@@ -172,7 +172,7 @@ def get_all_user_ids():
 async def send_message_to_all(message: Message):
     user_ids = get_all_user_ids()
     for user_id in user_ids:
-        await bot.send_message(user_id, f'Сообщение от админа\n{message.text}')
+        await bot.send_message(user_id, f'<b>Сообщение от админа</b>\n{message.text}', parse_mode=ParseMode.HTML)
 
 
 @admin.message(F.text == 'Сделать рассылку')

@@ -77,3 +77,15 @@ week_plan = InlineKeyboardMarkup(inline_keyboard=[
         InlineKeyboardButton(text='Удалить', callback_data='del_week_plan')
     ]
 ])
+
+groups_college = InlineKeyboardMarkup(inline_keyboard=[
+    [
+        InlineKeyboardButton(text='231-КС-21', callback_data='231-ks-21')
+    ],
+    [
+        InlineKeyboardButton(text='142-СК-19', callback_data='142-sk-19')
+    ],
+    [
+        InlineKeyboardButton(text='111-МВ-24', callback_data='111-mv-24')
+    ]
+])

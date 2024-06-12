@@ -73,3 +73,8 @@ async def data_check_week_data(callback: CallbackQuery):
                                   '3) Информатика - Лебедев Н.О. 224 каб.\n'
                                   '4) Физукультура - Елисеев А.П. 111 каб.',
                                   parse_mode=ParseMode.HTML)
+
+@teach.message(F.text == 'Рассылка группе')
+async def text_message_for_group_student(message: Message):
+    await message.answer('<b>Выберите нужную группу для отправки рассылки</b>',
+                         parse_mode=ParseMode.HTML, reply_markup=kb.groups_college)
