@@ -53,7 +53,7 @@ async def week_plan(message: Message):
     await message.answer('Выберите действие над расписанием', reply_markup=kb.week_plan)
 
 
-@teach.message('Создать тест')
+@teach.message(F.message == 'Создать тест')
 async def text_create_test(message: Message):
     await message.answer('В разработке!')
 
