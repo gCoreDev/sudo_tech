@@ -89,6 +89,6 @@ async def text_week_plan(message: Message):
 async def text_menu(message: Message):
     await message.answer('<b>Меню на сегодня:\n</b>'
                          '1)Борщ со сметаной 🍜\n'
-                         '2)Макороны с куриной котлетой 🍝\n'
+                         '2)Макароны с куриной котлетой 🍝\n'
                          '3)Компот 🧃',
                          parse_mode=ParseMode.HTML)
