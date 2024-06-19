@@ -45,7 +45,7 @@ async def cmd_start(message: Message):
     if cur.fetchone() is None:
         # Если пользователь не существует, добавляем его в базу данных
         cur.execute('INSERT INTO users (user_id, user_full_name, user_username, user_type)'
-                    'VALUES (?, ?, ?, ?)', (user_id, user_full_name, user_username, 'guest'))
+                    'VALUES (?, ?, ?, ?)', (user_id, user_full_name, user_username, 'student'))
         conn.commit()
         await message.answer('Добро пожаловать гость Вы находитесь в главном меню', reply_markup=kb.main)
     else:
