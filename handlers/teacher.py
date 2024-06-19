@@ -5,15 +5,10 @@ from aiogram import F, Router
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery
-from dotenv import load_dotenv
-import data.keyboards as kb
+import handlers.keyboards as kb
+from config import TOKEN, STUDENT_ID
 
-load_dotenv()
-
-STUDENT_ID = int(os.getenv('STUDENT_ID'))
-bot = Bot(token=os.getenv('TOKEN'))
-ADMIN_ID = int(os.getenv('ADMIN_ID'))
-TEACHER_ID = int(os.getenv('TEACHER_ID'))
+bot = Bot(token=TOKEN)
 
 teach = Router()
 
@@ -73,6 +68,7 @@ async def data_check_week_data(callback: CallbackQuery):
                                   '3) Информатика - Лебедев Н.О. 224 каб.\n'
                                   '4) Физукультура - Елисеев А.П. 111 каб.',
                                   parse_mode=ParseMode.HTML)
+
 
 @teach.message(F.text == 'Рассылка группе')
 async def text_message_for_group_student(message: Message):

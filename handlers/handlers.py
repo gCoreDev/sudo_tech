@@ -1,13 +1,15 @@
 import asyncio
-from aiogram import Bot, F, Router
-from aiogram.filters import CommandStart, Command, CommandObject, StateFilter
-from aiogram.types import Message, CallbackQuery, URLInputFile
+from aiogram import F, Router
+from aiogram.filters import CommandStart, Command
+from aiogram.types import Message
 from aiogram.enums import ChatAction
-import data.keyboards as kb
+import handlers.keyboards as kb
 import openpyxl
 import sqlite3
 
-conn = sqlite3.connect('data/docs/data_base/users.db')
+from config import DATA_DIR
+
+conn = sqlite3.connect(DATA_DIR/'data_base/users.db')
 
 hand = Router()
 cur = conn.cursor()
@@ -70,7 +72,7 @@ async def cmd_start(message: Message):
 
 @hand.message(Command('check_list'))
 async def cmd_table(message: Message):
-    book = openpyxl.open(r".\data\docs\data.xlsx", read_only=True)
+    book = openpyxl.open(DATA_DIR/"docs/data.xlsx", read_only=True)
     sheet = book.active
 
     output = ""

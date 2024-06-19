@@ -5,17 +5,12 @@ from aiogram import F, Router
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery
-from dotenv import load_dotenv
-import data.keyboards as kb
-
-load_dotenv()
+import handlers.keyboards as kb
+from config import TOKEN, TEACHER_ID
 
 std = Router()
 
-STUDENT_ID = int(os.getenv('STUDENT_ID'))
-bot = Bot(token=os.getenv('TOKEN'))
-ADMIN_ID = int(os.getenv('ADMIN_ID'))
-TEACHER_ID = int(os.getenv('TEACHER_ID'))
+bot = Bot(token=TOKEN)
 
 
 @std.message(F.text == 'Показать тесты')

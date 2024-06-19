@@ -1,24 +1,17 @@
-import os
-from aiogram import F, Router, Bot
+from aiogram import F, Router
 from aiogram.filters import Command
 from aiogram.types import Message
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.context import FSMContext
 from aiogram.enums.parse_mode import ParseMode
-from dotenv import load_dotenv
 import handlers.keyboards as kb
 import sqlite3
 
-load_dotenv()
+from config import TOKEN, bot, DATA_DIR
 
 admin = Router()
 
-ADMIN_ID = int(os.getenv('ADMIN_ID'))
-STUDENT_ID = int(os.getenv('STUDENT_ID'))
-TEACHER_ID = int(os.getenv('TEACHER_ID'))
-bot = Bot(token=os.getenv('TOKEN'))
-
-conn = sqlite3.connect('data/docs/data_base/users.db')
+conn = sqlite3.connect(DATA_DIR/'data_base/users.db')
 cur = conn.cursor()
 
 
