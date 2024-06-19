@@ -2,6 +2,7 @@ from aiogram import F, Router
 from aiogram.types.input_file import FSInputFile
 from aiogram.types import CallbackQuery
 
+
 file = Router()
 
 

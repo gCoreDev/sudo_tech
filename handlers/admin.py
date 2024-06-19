@@ -6,7 +6,7 @@ from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.context import FSMContext
 from aiogram.enums.parse_mode import ParseMode
 from dotenv import load_dotenv
-import data.keyboards as kb
+import handlers.keyboards as kb
 import sqlite3
 
 load_dotenv()

@@ -6,19 +6,18 @@ from aiogram import Bot, Dispatcher
 
 from dotenv import load_dotenv
 
-from data.handlers import hand
-from data.admin import admin
-from data.student import std
-from data.teacher import teach
-from data.send_files import file
-
-
-ADMIN_ID = int(os.getenv('ADMIN_ID'))
+from config import ADMIN_ID
+from config import TOKEN
+from handlers.handlers import hand
+from handlers.admin import admin
+from handlers.student import std
+from handlers.teacher import teach
+from handlers.send_files import file
 
 
 async def main():
     load_dotenv()
-    bot = Bot(token=os.getenv('TOKEN'))
+    bot = Bot(token=TOKEN)
     dp = Dispatcher()
     dp.include_routers(hand, admin, std, teach, file)
     await bot.send_message(ADMIN_ID, 'Бот запущен')
