@@ -48,11 +48,6 @@ async def week_plan(message: Message):
     await message.answer('Выберите действие над расписанием', reply_markup=kb.week_plan)
 
 
-@teach.message(F.text == 'Создать тест')
-async def text_create_test(message: Message):
-    await message.answer('В разработке!')
-
-
 @teach.callback_query(F.data == 'upload_week_plan')
 async def data_upload_week_plan(callback: CallbackQuery):
     await callback.answer('')
@@ -74,3 +69,24 @@ async def data_check_week_data(callback: CallbackQuery):
 async def text_message_for_group_student(message: Message):
     await message.answer('<b>Выберите нужную группу для отправки рассылки</b>',
                          parse_mode=ParseMode.HTML, reply_markup=kb.groups_college)
+
+
+class WorkTest(StatesGroup):
+    num_quest = State()
+    quest_name = State()
+    num_answer = State()
+    correct_answer = State()
+
+
+@teach.message(F.text == 'Создать тест')
+async def text_create_test(message: Message, state: FSMContext):
+    await state.update_data(num_quest=message.text)
+    await state.set_state(WorkTest.num_quest)
+    await message.answer('Напишите количество вопросов')
+
+
+@teach.message(FSMContext == WorkTest.num_quest)
+async def num_quest(message: Message, state: FSMContext):
+    await state.update_data(quest_name=message.text)
+    await state.set_state(WorkTest.quest_name)
+    await message.answer('Окей.')
