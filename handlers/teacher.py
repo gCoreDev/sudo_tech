@@ -85,7 +85,7 @@ async def text_create_test(message: Message, state: FSMContext):
     await message.answer('Напишите количество вопросов')
 
 
-@teach.message(FSMContext == WorkTest.num_quest)
+@teach.message(WorkTest.num_answer)
 async def num_quest(message: Message, state: FSMContext):
     await state.update_data(quest_name=message.text)
     await state.set_state(WorkTest.quest_name)
