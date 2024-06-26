@@ -68,8 +68,7 @@ async def start_test(callback_query: CallbackQuery, state: FSMContext):
     conn_results = sqlite3.connect('data/data_base/results.db')
     c_results = conn_results.cursor()
 
-    c_results.execute("SELECT * FROM results WHERE test_id = ? AND full_name = ?",
-                      (test_id, callback_query.from_user.full_name))
+    c_results.execute("SELECT * FROM results WHERE test_id = ? AND full_name = ?", (test_id, callback_query.from_user.full_name))
     if c_results.fetchone():
         await callback_query.answer("Вы уже проходили этот тест.")
         conn_tests.close()
@@ -81,6 +80,7 @@ async def start_test(callback_query: CallbackQuery, state: FSMContext):
     await show_question(callback_query.message, state)
 
     conn_tests.close()
+    conn_results.close()
     await callback_query.answer('')
 
 
@@ -122,14 +122,25 @@ async def process_student_answer(callback_query: CallbackQuery, state: FSMContex
 
     selected_answer = callback_query.data.split("_")[-1]
 
-    cur_results.execute("INSERT INTO results (test_id, test_name, full_name, answer, created_at)"
-                        " VALUES (?, ?, ?, ?, ?)",
-                        (test_id, test_name, callback_query.from_user.full_name, selected_answer,
-                         datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+    conn_results = sqlite3.connect('data/data_base/results.db')
+    c_results = conn_results.cursor()
+
+    c_results.execute("SELECT * FROM results WHERE test_id = ? AND full_name = ?", (test_id, callback_query.from_user.full_name))
+    if c_results.fetchone():
+        await callback_query.answer("Вы уже проходили этот тест.")
+        conn_results.close()
+        return
+
+    c_results.execute("INSERT INTO results (test_id, test_name, full_name, answer, created_at)"
+                      " VALUES (?, ?, ?, ?, ?)",
+                      (test_id, test_name, callback_query.from_user.full_name, selected_answer,
+                       datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
     conn_results.commit()
 
-    await state.update_data(current_question=current_question + 1)
+    await state.update_data(current_question=current_question+1)
     await show_question(callback_query.message, state)
+    await callback_query.answer('')
+    conn_results.close()
 
 
 async def send_message_to_teacher(message: Message):
