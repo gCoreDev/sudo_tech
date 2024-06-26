@@ -72,21 +72,28 @@ async def text_message_for_group_student(message: Message):
 
 
 class WorkTest(StatesGroup):
-    num_quest = State()
-    quest_name = State()
-    num_answer = State()
-    correct_answer = State()
+    quest1 = State()
+    answer1 = State()
+    answer2 = State()
+    answer3 = State()
+    answer4 = State()
 
 
 @teach.message(F.text == 'Создать тест')
 async def text_create_test(message: Message, state: FSMContext):
-    await state.update_data(num_quest=message.text)
-    await state.set_state(WorkTest.num_quest)
-    await message.answer('Напишите количество вопросов')
+    await state.set_state(WorkTest.quest1)
+    await message.answer('Напишите количество вопросов', reply_markup=kb.cancel)
 
 
-@teach.message(WorkTest.num_answer)
-async def num_quest(message: Message, state: FSMContext):
-    await state.update_data(quest_name=message.text)
-    await state.set_state(WorkTest.quest_name)
-    await message.answer('Окей.')
+@teach.message(F.text == 'Отменить')
+async def cmd_cancel(message: Message, state: FSMContext):
+    await state.clear()
+    await message.answer(f'<b>Создание теста прекращено</b>', parse_mode=ParseMode.HTML,
+                         reply_markup=kb.teacher_panel())
+
+
+@teach.message(WorkTest.quest1)
+async def test_quest1(message: Message, state: FSMContext):
+    await state.update_data(quest1=message.text)
+    await state.set_state(WorkTest.answer1)
+    await message.answer('Отлично, теперь введите первый вариант ответа')

@@ -89,3 +89,7 @@ groups_college = InlineKeyboardMarkup(inline_keyboard=[
         InlineKeyboardButton(text='111-МВ-24', callback_data='111-mv-24')
     ]
 ])
+
+cancel = ReplyKeyboardMarkup(keyboard=[
+    [KeyboardButton(text='Выйти из создания теста')]
+])
