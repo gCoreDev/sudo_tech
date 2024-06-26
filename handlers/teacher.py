@@ -71,16 +71,27 @@ async def text_message_for_group_student(message: Message):
 
 
 class WorkTest(StatesGroup):
+    name_quest = State()
     quest1 = State()
     q1_answer1 = State()
     q1_answer2 = State()
     q1_answer3 = State()
     q1_answer4 = State()
+    quest2 = State()
+    q2_answer1 = State()
+    q2_answer2 = State()
+    q2_answer3 = State()
+    q2_answer4 = State()
+    quest3 = State()
+    q3_answer1 = State()
+    q3_answer2 = State()
+    q3_answer3 = State()
+    q3_answer4 = State()
 
 
 @teach.message(F.text == 'Создать тест')
 async def text_create_test(message: Message, state: FSMContext):
-    await state.set_state(WorkTest.quest1)
+    await state.set_state(WorkTest.name_quest)
     await message.answer('Напишите первый вопрос', reply_markup=kb.cancel)
 
 
@@ -91,8 +102,15 @@ async def cmd_cancel(message: Message, state: FSMContext):
                          reply_markup=kb.teacher_panel())
 
 
+@teach.message(WorkTest.name_quest)
+async def test_name_quest(message: Message, state: FSMContext):
+    await state.update_data(name_quest=message.text)
+    await state.set_state(WorkTest.quest1)
+    await message.answer('Отлично! Напишите первый вопрос')
+
+
 @teach.message(WorkTest.quest1)
-async def test_q1_answer1(message: Message, state: FSMContext):
+async def test_quest1(message: Message, state: FSMContext):
     await state.update_data(question1=message.text)
     await state.set_state(WorkTest.q1_answer1)
     await message.answer('Напишите первый вариант ответа')
@@ -135,3 +153,4 @@ async def test_q1_answer4(message: Message, state: FSMContext):
         reply_markup=kb.teacher_panel(),
         parse_mode=ParseMode.MARKDOWN
     )
+
