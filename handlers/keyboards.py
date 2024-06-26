@@ -50,7 +50,7 @@ def std_panel():
     return keyboard.adjust(2).as_markup(resize_keyboard=True)
 
 
-key_teacher = ('Создать тест', 'Расписание', 'Рассылка группе', 'Связь с админом','Назад')
+key_teacher = ('Создать тест', 'Расписание', 'Рассылка группе', 'Связь с админом', 'Список тестов', 'Назад')
 
 
 def teacher_panel():
