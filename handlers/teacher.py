@@ -112,7 +112,7 @@ class WorkTest(StatesGroup):
 @teach.message(F.text == 'Создать тест')
 async def text_create_test(message: Message, state: FSMContext):
     await state.set_state(WorkTest.name_quest)
-    await message.answer('Напишите первый вопрос', reply_markup=kb.cancel)
+    await message.answer('Напишите название теста', reply_markup=kb.cancel)
 
 
 @teach.message(F.text == 'Выйти из создания теста')
