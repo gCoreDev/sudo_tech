@@ -65,6 +65,17 @@ async def start_test(callback_query: CallbackQuery, state: FSMContext):
     test_name, questions_json = c_tests.fetchone()
     questions = json.loads(questions_json)
 
+    conn_results = sqlite3.connect('data/data_base/results.db')
+    c_results = conn_results.cursor()
+
+    c_results.execute("SELECT * FROM results WHERE test_id = ? AND full_name = ?",
+                      (test_id, callback_query.from_user.full_name))
+    if c_results.fetchone():
+        await callback_query.answer("Вы уже проходили этот тест.")
+        conn_tests.close()
+        conn_results.close()
+        return
+
     await state.update_data(test_id=test_id, test_name=test_name, questions=questions, current_question=0)
 
     await show_question(callback_query.message, state)
