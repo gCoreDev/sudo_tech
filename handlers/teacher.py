@@ -73,16 +73,16 @@ async def text_message_for_group_student(message: Message):
 
 class WorkTest(StatesGroup):
     quest1 = State()
-    answer1 = State()
-    answer2 = State()
-    answer3 = State()
-    answer4 = State()
+    q1_answer1 = State()
+    q1_answer2 = State()
+    q1_answer3 = State()
+    q1_answer4 = State()
 
 
 @teach.message(F.text == 'Создать тест')
 async def text_create_test(message: Message, state: FSMContext):
     await state.set_state(WorkTest.quest1)
-    await message.answer('Напишите количество вопросов', reply_markup=kb.cancel)
+    await message.answer('Напишите первый вопрос', reply_markup=kb.cancel)
 
 
 @teach.message(F.text == 'Выйти из создания теста')
@@ -92,8 +92,37 @@ async def cmd_cancel(message: Message, state: FSMContext):
                          reply_markup=kb.teacher_panel())
 
 
-@teach.message(WorkTest.quest1)
+@teach.message(WorkTest.q1_answer1)
 async def test_quest1(message: Message, state: FSMContext):
     await state.update_data(quest1=message.text)
-    await state.set_state(WorkTest.answer1)
-    await message.answer('Отлично, теперь введите первый вариант ответа')
+    await state.set_state(WorkTest.q1_answer1)
+    await message.answer('Далее напишите второй вариант ответа')
+
+
+@teach.message(WorkTest.q1_answer1)
+async def test_quest2(message: Message, state: FSMContext):
+    await state.update_data(q1_answre1=message.text)
+    await state.set_state(WorkTest.q1_answer2)
+    await message.answer('Теперь напишите третий вариант ответа')
+
+
+@teach.message(WorkTest.q1_answer3)
+async def test_quest3(message: Message, state: FSMContext):
+    await state.update_data(q1_answer3=message.text)
+    await state.set_state(WorkTest.q1_answer3)
+    await message.answer('Напишите четвертый вариант ответа')
+
+
+@teach.message(WorkTest.q1_answer4)
+async def test_quest4(message: Message, state: FSMContext):
+    await state.update_data(q1_answer4=message.text)
+    await state.set_state(WorkTest.q1_answer4)
+    await message.answer('Обзор теста:')
+    data = await state.get_data()
+    await state.clear()
+
+    formated_text = []
+    [
+        formated_text.append(f'{key}: {value}')
+        for key, value in data.items()
+    ]
