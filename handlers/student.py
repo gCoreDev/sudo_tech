@@ -98,13 +98,16 @@ async def show_question(message: Message, state: FSMContext):
 @std.callback_query(lambda c: c.data.startswith("answer_"))
 async def process_student_answer(callback_query: CallbackQuery, state: FSMContext):
     data = await state.get_data()
-    test_id = data['test_id']
+    test_id = data.get('test_id', None)
     test_name = data['test_name']
     questions = data['questions']
     current_question = data['current_question']
 
-    selected_answer = callback_query.data.split("_")[-1]
+    if test_id is None:
+        await callback_query.answer("Тест не найден.")
+        return
 
+    selected_answer = callback_query.data.split("_")[-1]
 
     cur_results.execute("INSERT INTO results (test_id, test_name, full_name, answer, created_at)"
                       " VALUES (?, ?, ?, ?, ?)",
@@ -114,12 +117,6 @@ async def process_student_answer(callback_query: CallbackQuery, state: FSMContex
 
     await state.update_data(current_question=current_question+1)
     await show_question(callback_query.message, state)
-    await callback_query.answer('')
-
-
-class TeacherContact(StatesGroup):
-    waiting_for_message = State()
-    waiting_for_response1 = State()
 
 
 async def send_message_to_teacher(message: Message):
