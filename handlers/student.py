@@ -1,10 +1,7 @@
 import json
-import sqlite3
 from datetime import datetime
-
-from aiogram import Bot, types
+from aiogram import Bot
 from aiogram.enums.parse_mode import ParseMode
-import os
 from aiogram import F, Router
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.context import FSMContext
@@ -17,10 +14,8 @@ std = Router()
 
 bot = Bot(token=TOKEN)
 
-
 conn_results = sqlite3.connect('data/data_base/results.db')
 cur_results = conn_results.cursor()
-
 
 conn = sqlite3.connect('data/data_base/results.db')
 cur = conn.cursor()
@@ -73,6 +68,8 @@ async def start_test(callback_query: CallbackQuery, state: FSMContext):
     await state.update_data(test_id=test_id, test_name=test_name, questions=questions, current_question=0)
 
     await show_question(callback_query.message, state)
+
+    conn_tests.close()
     await callback_query.answer('')
 
 
@@ -91,7 +88,7 @@ async def show_question(message: Message, state: FSMContext):
         ])
 
         await message.answer(
-            f"*Тест: {test_name}*\n\n*Вопрос {current_question+1}:* *{question['question']}*\n\nВарианты ответа:",
+            f"*Тест: {test_name}*\n\n*Вопрос {current_question + 1}:* *{question['question']}*\n\nВарианты ответа:",
             reply_markup=keyboard,
             parse_mode=ParseMode.MARKDOWN
         )
@@ -115,12 +112,12 @@ async def process_student_answer(callback_query: CallbackQuery, state: FSMContex
     selected_answer = callback_query.data.split("_")[-1]
 
     cur_results.execute("INSERT INTO results (test_id, test_name, full_name, answer, created_at)"
-                      " VALUES (?, ?, ?, ?, ?)",
-                      (test_id, test_name, callback_query.from_user.full_name, selected_answer,
-                       datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+                        " VALUES (?, ?, ?, ?, ?)",
+                        (test_id, test_name, callback_query.from_user.full_name, selected_answer,
+                         datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
     conn_results.commit()
 
-    await state.update_data(current_question=current_question+1)
+    await state.update_data(current_question=current_question + 1)
     await show_question(callback_query.message, state)
 
 

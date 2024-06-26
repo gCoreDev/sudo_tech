@@ -5,7 +5,6 @@ from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery
 from aiogram.types import (InlineKeyboardMarkup, InlineKeyboardButton)
-from aiogram.utils.keyboard import InlineKeyboardBuilder
 import handlers.keyboards as kb
 from config import TOKEN, STUDENT_ID
 import json
@@ -244,34 +243,43 @@ async def show_selected_test(callback_query: CallbackQuery):
 
 
 @teach.callback_query(F.data.startswith("send_test_"))
-async def send_test_to_students(callback_query: CallbackQuery, state: FSMContext):
-    test_id = int(callback_query.data.split("_")[-1])
+async def send_test_to_students(message: Message, state: FSMContext):
+    conn_tests = sqlite3.connect('data/data_base/tests.db')
+    c_tests = conn_tests.cursor()
 
-    cur.execute("SELECT name, questions FROM tests WHERE id = ?", (test_id,))
-    name, questions_json = cur.fetchone()
-    questions = json.loads(questions_json)
+    c_tests.execute("SELECT id, name, questions FROM tests")
+    tests = c_tests.fetchall()
 
-    conn_users = sqlite3.connect('data/data_base/users.db')
-    cur_users = conn_users.cursor()
+    for test_id, test_name, questions_json in tests:
+        questions = json.loads(questions_json)
 
-    cur_users.execute("SELECT user_id FROM users WHERE user_type = 'student'")
-    student_ids = [row[0] for row in cur_users.fetchall()]
+        conn_users = sqlite3.connect('data/data_base/users.db')
+        c_users = conn_users.cursor()
 
-    for question_index, question in enumerate(questions, start=1):
-        keyboard = InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text=f'{answer}', callback_data=f"{test_id}_{question_index - 1}")]
-            for i, answer in enumerate(question['answers'])
-        ])
+        c_users.execute("SELECT user_id FROM users WHERE user_type = 'student'")
+        student_ids = [row[0] for row in c_users.fetchall()]
 
         for student_id in student_ids:
             await bot.send_message(
                 student_id,
-                f"*Тест: {name}*\n\n*Вопрос {question_index}:* *{question['question']}*\n\nВарианты ответа:",
-                reply_markup=keyboard,
+                f"*Тест: {test_name}*\n\nПожалуйста, нажмите /start, чтобы начать тест.",
                 parse_mode=ParseMode.MARKDOWN
             )
+            await bot.send_message(
+                student_id,
+                f"*Тест: {test_name}*\n\n*Вопрос 1:* *{questions[0]['question']}*\n\nВарианты ответа:",
+                reply_markup=InlineKeyboardMarkup(inline_keyboard=[
+                    [InlineKeyboardButton(text=answer, callback_data=f"answer_{test_id}_0_{i}")]
+                    for i, answer in enumerate(questions[0]['answers'])
+                ]),
+                parse_mode=ParseMode.MARKDOWN
+            )
+            await state.update_data(test_id=test_id, test_name=test_name, questions=questions, current_question=1)
 
-    await callback_query.answer("Тест отправлен студентам.")
+        conn_users.close()
+
+    conn_tests.close()
+    await message.answer("Тесты отправлены студентам.")
 
 
 @teach.callback_query(F.data == "back")
@@ -291,7 +299,7 @@ async def back_to_tests_list(callback_query: CallbackQuery):
 
 
 @teach.message(F.text == 'Показать результаты')
-async def show_test_results(message: Message, state: FSMContext):
+async def show_test_results(message: Message):
     conn_tests = sqlite3.connect('data/data_base/tests.db')
     c_tests = conn_tests.cursor()
 
@@ -313,7 +321,8 @@ async def show_selected_test_results(callback_query: CallbackQuery, state: FSMCo
     conn_results = sqlite3.connect('data/data_base/results.db')
     c_results = conn_results.cursor()
 
-    c_results.execute("SELECT full_name, answer, created_at FROM results WHERE test_name = ?", (test_name,))
+    c_results.execute("SELECT full_name, answer, created_at FROM results WHERE test_name = ?",
+                      (test_name,))
     results = c_results.fetchall()
 
     if results:
@@ -327,5 +336,3 @@ async def show_selected_test_results(callback_query: CallbackQuery, state: FSMCo
 
     await callback_query.message.answer(formatted_results.strip())
     await callback_query.answer('')
-
-
