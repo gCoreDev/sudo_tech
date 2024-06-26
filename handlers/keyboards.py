@@ -92,4 +92,4 @@ groups_college = InlineKeyboardMarkup(inline_keyboard=[
 
 cancel = ReplyKeyboardMarkup(keyboard=[
     [KeyboardButton(text='Выйти из создания теста')]
-])
+], resize_keyboard=True)
