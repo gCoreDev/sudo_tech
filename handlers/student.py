@@ -1,21 +1,120 @@
+import json
+import sqlite3
+from datetime import datetime
+
 from aiogram import Bot, types
 from aiogram.enums.parse_mode import ParseMode
 import os
 from aiogram import F, Router
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.context import FSMContext
-from aiogram.types import Message, CallbackQuery
+from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
 import handlers.keyboards as kb
 from config import TOKEN, TEACHER_ID
+import sqlite3
 
 std = Router()
 
 bot = Bot(token=TOKEN)
 
 
+conn_results = sqlite3.connect('data/data_base/results.db')
+cur_results = conn_results.cursor()
+
+
+conn = sqlite3.connect('data/data_base/results.db')
+cur = conn.cursor()
+
+cur.execute('''CREATE TABLE IF NOT EXISTS results
+             (id INTEGER PRIMARY KEY,
+              test_id INTEGER,
+              test_name TEXT,
+              full_name TEXT,
+              answer TEXT,
+              created_at TEXT)''')
+
+conn.commit()
+
+
 @std.message(F.text == 'Показать тесты')
 async def show_test(message: Message):
-    await message.answer('На данный момент тестов для прохождения нет')
+    await message.answer("Привет! Выберите тест, который хотите пройти.")
+
+    conn_tests = sqlite3.connect('data/data_base/tests.db')
+    c_tests = conn_tests.cursor()
+
+    c_tests.execute("SELECT id, name FROM tests")
+    tests = c_tests.fetchall()
+
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text=test_name, callback_data=f"start_test_{test_id}")]
+        for test_id, test_name in tests
+    ])
+
+    await message.answer("Доступные тесты:", reply_markup=keyboard)
+
+
+@std.callback_query(lambda c: c.data.startswith("start_test_"))
+async def start_test(callback_query: CallbackQuery, state: FSMContext):
+    test_id = int(callback_query.data.split("_")[-1])
+
+    conn_tests = sqlite3.connect('data/data_base/tests.db')
+    c_tests = conn_tests.cursor()
+
+    c_tests.execute("SELECT name, questions FROM tests WHERE id = ?", (test_id,))
+    test_name, questions_json = c_tests.fetchone()
+    questions = json.loads(questions_json)
+
+    await state.update_data(test_id=test_id, test_name=test_name, questions=questions, current_question=0)
+
+    await show_question(callback_query.message, state)
+    await callback_query.answer('')
+
+
+async def show_question(message: Message, state: FSMContext):
+    data = await state.get_data()
+    test_id = data['test_id']
+    test_name = data['test_name']
+    questions = data['questions']
+    current_question = data['current_question']
+
+    if current_question < len(questions):
+        question = questions[current_question]
+        keyboard = InlineKeyboardMarkup(inline_keyboard=[
+            [InlineKeyboardButton(text=answer, callback_data=f"answer_{answer}")]
+            for answer in question['answers']
+        ])
+
+        await message.answer(
+            f"*Тест: {test_name}*\n\n*Вопрос {current_question+1}:* *{question['question']}*\n\nВарианты ответа:",
+            reply_markup=keyboard,
+            parse_mode=ParseMode.MARKDOWN
+        )
+    else:
+        await state.clear()
+        await message.answer("Тест завершен.")
+
+
+@std.callback_query(lambda c: c.data.startswith("answer_"))
+async def process_student_answer(callback_query: CallbackQuery, state: FSMContext):
+    data = await state.get_data()
+    test_id = data['test_id']
+    test_name = data['test_name']
+    questions = data['questions']
+    current_question = data['current_question']
+
+    selected_answer = callback_query.data.split("_")[-1]
+
+
+    cur_results.execute("INSERT INTO results (test_id, test_name, full_name, answer, created_at)"
+                      " VALUES (?, ?, ?, ?, ?)",
+                      (test_id, test_name, callback_query.from_user.full_name, selected_answer,
+                       datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+    conn_results.commit()
+
+    await state.update_data(current_question=current_question+1)
+    await show_question(callback_query.message, state)
+    await callback_query.answer('')
 
 
 class TeacherContact(StatesGroup):

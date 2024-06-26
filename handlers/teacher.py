@@ -86,15 +86,6 @@ cur.execute('''
     created_at TEXT)
 ''')
 
-cur.execute('''
-    CREATE TABLE IF NOT EXISTS results
-    (id INTEGER PRIMARY KEY,
-    test_name TEXT,
-    full_name TEXT,
-    answer TEXT, 
-    created_at TEXT)
-''')
-
 
 conn.commit()
 
@@ -227,7 +218,7 @@ async def text_show_tests(message: Message):
 
 
 @teach.callback_query(F.data.startswith("show_test_"))
-async def show_selected_test(callback_query: CallbackQuery, state: FSMContext):
+async def show_selected_test(callback_query: CallbackQuery):
     test_id = int(callback_query.data.split("_")[-1])
 
     cur.execute("SELECT name, questions FROM tests WHERE id = ?", (test_id,))
@@ -245,10 +236,42 @@ async def show_selected_test(callback_query: CallbackQuery, state: FSMContext):
     await callback_query.message.edit_text(
         f"Тест: *{name}*\n\n{'\n'.join(formatted_test)}",
         reply_markup=InlineKeyboardMarkup(inline_keyboard=[
+            [InlineKeyboardButton(text="Отправить тест студентам", callback_data=f"send_test_{test_id}")],
             [InlineKeyboardButton(text="Назад", callback_data="back")]
         ]),
         parse_mode=ParseMode.MARKDOWN
     )
+
+
+@teach.callback_query(F.data.startswith("send_test_"))
+async def send_test_to_students(callback_query: CallbackQuery, state: FSMContext):
+    test_id = int(callback_query.data.split("_")[-1])
+
+    cur.execute("SELECT name, questions FROM tests WHERE id = ?", (test_id,))
+    name, questions_json = cur.fetchone()
+    questions = json.loads(questions_json)
+
+    conn_users = sqlite3.connect('data/data_base/users.db')
+    cur_users = conn_users.cursor()
+
+    cur_users.execute("SELECT user_id FROM users WHERE user_type = 'student'")
+    student_ids = [row[0] for row in cur_users.fetchall()]
+
+    for question_index, question in enumerate(questions, start=1):
+        keyboard = InlineKeyboardMarkup(inline_keyboard=[
+            [InlineKeyboardButton(text=f'{answer}', callback_data=f"{test_id}_{question_index - 1}")]
+            for i, answer in enumerate(question['answers'])
+        ])
+
+        for student_id in student_ids:
+            await bot.send_message(
+                student_id,
+                f"*Тест: {name}*\n\n*Вопрос {question_index}:* *{question['question']}*\n\nВарианты ответа:",
+                reply_markup=keyboard,
+                parse_mode=ParseMode.MARKDOWN
+            )
+
+    await callback_query.answer("Тест отправлен студентам.")
 
 
 @teach.callback_query(F.data == "back")
@@ -265,5 +288,44 @@ async def back_to_tests_list(callback_query: CallbackQuery):
         "Выберите тест, чтобы просмотреть:",
         reply_markup=keyboard_tests
     )
+
+
+@teach.message(F.text == 'Показать результаты')
+async def show_test_results(message: Message, state: FSMContext):
+    conn_tests = sqlite3.connect('data/data_base/tests.db')
+    c_tests = conn_tests.cursor()
+
+    c_tests.execute("SELECT name FROM tests")
+    test_names = [row[0] for row in c_tests.fetchall()]
+
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text=test_name, callback_data=f"show_results_{test_name}")]
+        for test_name in test_names
+    ])
+
+    await message.answer("Выберите тест, чтобы посмотреть результаты:", reply_markup=keyboard)
+
+
+@teach.callback_query(lambda c: c.data.startswith("show_results_"))
+async def show_selected_test_results(callback_query: CallbackQuery, state: FSMContext):
+    test_name = callback_query.data.split("_")[-1]
+
+    conn_results = sqlite3.connect('data/data_base/results.db')
+    c_results = conn_results.cursor()
+
+    c_results.execute("SELECT full_name, answer, created_at FROM results WHERE test_name = ?", (test_name,))
+    results = c_results.fetchall()
+
+    if results:
+        formatted_results = f"Тест: {test_name}\n\n"
+        for row in results:
+            formatted_results += f"Студент: {row[0]}\n"
+            formatted_results += f"Ответ: {row[1]}\n"
+            formatted_results += f"Дата: {row[2]}\n\n"
+    else:
+        formatted_results = f"Для теста '{test_name}' нет результатов."
+
+    await callback_query.message.answer(formatted_results.strip())
+    await callback_query.answer('')
 
 
