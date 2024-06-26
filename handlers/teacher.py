@@ -1,6 +1,5 @@
 from aiogram import Bot
 from aiogram.enums.parse_mode import ParseMode
-import os
 from aiogram import F, Router
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.context import FSMContext
@@ -92,31 +91,37 @@ async def cmd_cancel(message: Message, state: FSMContext):
                          reply_markup=kb.teacher_panel())
 
 
-@teach.message(WorkTest.q1_answer1)
-async def test_quest1(message: Message, state: FSMContext):
+@teach.message(WorkTest.quest1)
+async def test_q1_answer1(message: Message, state: FSMContext):
     await state.update_data(quest1=message.text)
     await state.set_state(WorkTest.q1_answer1)
+    await message.answer('Напишите первый вариант ответа')
+
+
+@teach.message(WorkTest.q1_answer1)
+async def test_q1_answer1(message: Message, state: FSMContext):
+    await state.update_data(q1_answer1=message.text)
+    await state.set_state(WorkTest.q1_answer2)
     await message.answer('Далее напишите второй вариант ответа')
 
 
-@teach.message(WorkTest.q1_answer1)
-async def test_quest2(message: Message, state: FSMContext):
-    await state.update_data(q1_answre1=message.text)
-    await state.set_state(WorkTest.q1_answer2)
+@teach.message(WorkTest.q1_answer2)
+async def test_q1_answer2(message: Message, state: FSMContext):
+    await state.update_data(q1_answre2=message.text)
+    await state.set_state(WorkTest.q1_answer3)
     await message.answer('Теперь напишите третий вариант ответа')
 
 
 @teach.message(WorkTest.q1_answer3)
-async def test_quest3(message: Message, state: FSMContext):
+async def test_q1_answer3(message: Message, state: FSMContext):
     await state.update_data(q1_answer3=message.text)
-    await state.set_state(WorkTest.q1_answer3)
+    await state.set_state(WorkTest.q1_answer4)
     await message.answer('Напишите четвертый вариант ответа')
 
 
 @teach.message(WorkTest.q1_answer4)
-async def test_quest4(message: Message, state: FSMContext):
+async def test_q1_answer4(message: Message, state: FSMContext):
     await state.update_data(q1_answer4=message.text)
-    await state.set_state(WorkTest.q1_answer4)
     await message.answer('Обзор теста:')
     data = await state.get_data()
     await state.clear()
