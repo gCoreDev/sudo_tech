@@ -131,7 +131,4 @@ async def test_q1_answer4(message: Message, state: FSMContext):
         for key, value in data.items()
     ]
     await message.answer('Обзор теста:')
-    await message.answer(
-        "\n.".join(f'`{formated_text}`'),
-        parse_mode=ParseMode.MARKDOWN
-    )
+    await message.answer(formated_text)
