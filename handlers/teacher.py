@@ -122,12 +122,11 @@ async def test_q1_answer3(message: Message, state: FSMContext):
 @teach.message(WorkTest.q1_answer4)
 async def test_q1_answer4(message: Message, state: FSMContext):
     await state.update_data(q1_answer4=message.text)
-    await message.answer('Обзор теста:')
     data = await state.get_data()
     await state.clear()
-
     formated_text = []
     [
         formated_text.append(f'{key}: {value}')
         for key, value in data.items()
     ]
+    await message.answer('Обзор теста:', '\n'.join(formated_text))
