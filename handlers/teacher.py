@@ -262,20 +262,10 @@ async def send_test_to_students(message: Message, state: FSMContext):
         for student_id in student_ids:
             await bot.send_message(
                 student_id,
-                f"*Тест: {test_name}*\n\nПожалуйста, нажмите /start, чтобы начать тест.",
+                f"*Уведомление*\n*Вам направили тест: {test_name}*\n\nПожалуйста, сделайте его в ближайшее время,\n"
+                f"Протйи тест вы можете нажав по кнопке показать тесты.",
                 parse_mode=ParseMode.MARKDOWN
             )
-            await bot.send_message(
-                student_id,
-                f"*Тест: {test_name}*\n\n*Вопрос 1:* *{questions[0]['question']}*\n\nВарианты ответа:",
-                reply_markup=InlineKeyboardMarkup(inline_keyboard=[
-                    [InlineKeyboardButton(text=answer, callback_data=f"answer_{test_id}_0_{i}")]
-                    for i, answer in enumerate(questions[0]['answers'])
-                ]),
-                parse_mode=ParseMode.MARKDOWN
-            )
-            await state.update_data(test_id=test_id, test_name=test_name, questions=questions, current_question=1)
-
         conn_users.close()
 
     conn_tests.close()
