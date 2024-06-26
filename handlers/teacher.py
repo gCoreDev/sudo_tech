@@ -93,7 +93,7 @@ async def cmd_cancel(message: Message, state: FSMContext):
 
 @teach.message(WorkTest.quest1)
 async def test_q1_answer1(message: Message, state: FSMContext):
-    await state.update_data(quest1=message.text)
+    await state.update_data(question1=message.text)
     await state.set_state(WorkTest.q1_answer1)
     await message.answer('Напишите первый вариант ответа')
 
@@ -107,7 +107,7 @@ async def test_q1_answer1(message: Message, state: FSMContext):
 
 @teach.message(WorkTest.q1_answer2)
 async def test_q1_answer2(message: Message, state: FSMContext):
-    await state.update_data(q1_answre2=message.text)
+    await state.update_data(q1_answer2=message.text)
     await state.set_state(WorkTest.q1_answer3)
     await message.answer('Теперь напишите третий вариант ответа')
 
@@ -127,7 +127,11 @@ async def test_q1_answer4(message: Message, state: FSMContext):
 
     formated_text = []
     [
-        formated_text.append(f'{key}: {value}')
+        formated_text.append(f'*{key}*: `{value}`')
         for key, value in data.items()
     ]
-    await message.answer('Обзор теста:\n'.join(f'`{formated_text}`\n'), reply_markup=kb.teacher_panel())
+    await message.answer(
+        f'Составленный тест:\n\n{"\n".join(formated_text)}',
+        reply_markup=kb.teacher_panel(),
+        parse_mode=ParseMode.MARKDOWN
+    )
