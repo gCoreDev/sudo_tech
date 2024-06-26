@@ -36,6 +36,11 @@ cur.execute('''CREATE TABLE IF NOT EXISTS results
 conn.commit()
 
 
+class TeacherContact(StatesGroup):
+    waiting_for_message = State()
+    waiting_for_response1 = State()
+
+
 @std.message(F.text == 'Показать тесты')
 async def show_test(message: Message):
     await message.answer("Привет! Выберите тест, который хотите пройти.")
