@@ -126,7 +126,7 @@ async def cmd_cancel(message: Message, state: FSMContext):
 async def test_name_quest(message: Message, state: FSMContext):
     await state.update_data(name_quest=message.text)
     await state.set_state(WorkTest.quest1)
-    await message.answer('Отлично! Напишите первый вопрос')
+    await message.answer('Отлично! Напишите вопроc №1')
 
 
 @teach.message(WorkTest.quest1)
@@ -196,6 +196,42 @@ async def test_q2_answer3(message: Message, state: FSMContext):
 @teach.message(WorkTest.q2_answer4)
 async def test_q2_answer4(message: Message, state: FSMContext):
     await state.update_data(q2_answer4=message.text)
+    await state.set_state(WorkTest.quest3)
+    await message.answer('Напишите вопрос №3')
+
+
+
+@teach.message(WorkTest.quest3)
+async def test_quest3(message: Message, state: FSMContext):
+    await state.update_data(question3=message.text)
+    await state.set_state(WorkTest.q3_answer1)
+    await message.answer('Теперь напишите первый вариант ответа')
+
+
+@teach.message(WorkTest.q3_answer1)
+async def test_q3_answer1(message: Message, state: FSMContext):
+    await state.update_data(q3_answer1=message.text)
+    await state.set_state(WorkTest.q3_answer2)
+    await message.answer('Теперь напишите второй вариант ответа')
+
+
+@teach.message(WorkTest.q3_answer2)
+async def test_q3_answer2(message: Message, state: FSMContext):
+    await state.update_data(q3_answer2=message.text)
+    await state.set_state(WorkTest.q3_answer3)
+    await message.answer('Теперь напишите третий вариант ответа')
+
+
+@teach.message(WorkTest.q3_answer3)
+async def test_q3_answer3(message: Message, state: FSMContext):
+    await state.update_data(q3_answer3=message.text)
+    await state.set_state(WorkTest.q3_answer4)
+    await message.answer('Теперь напишите четвертый вариант ответа')
+
+
+@teach.message(WorkTest.q3_answer4)
+async def test_q3_answer4(message: Message, state: FSMContext):
+    await state.update_data(q3_answer4=message.text)
     data = await state.get_data()
     await state.clear()
 
@@ -218,6 +254,15 @@ async def test_q2_answer4(message: Message, state: FSMContext):
                     data.get('q2_answer2', ''),
                     data.get('q2_answer3', ''),
                     data.get('q2_answer4', '')
+                ]
+            },
+            {
+                'question': data.get('question3'),
+                'answers': [
+                    data.get('q3_answer1', ''),
+                    data.get('q3_answer2', ''),
+                    data.get('q3_answer3', ''),
+                    data.get('q3_answer4', '')
                 ]
             }
         ]
