@@ -27,8 +27,8 @@ cur.execute('''CREATE TABLE IF NOT EXISTS results
               test_name TEXT,
               full_name TEXT,
               answer TEXT,
+              answer_text TEXT,
               created_at TEXT)''')
-
 conn.commit()
 
 
@@ -54,20 +54,43 @@ async def show_test(message: Message):
 async def start_test(callback_query: CallbackQuery, state: FSMContext):
     test_id = int(callback_query.data.split("_")[-1])
 
-    conn_tests = sqlite3.connect('data/data_base/tests.db')
-    c_tests = conn_tests.cursor()
+    conn_results = sqlite3.connect('data/data_base/results.db')
+    c_results = conn_results.cursor()
 
-    c_tests.execute("SELECT name, questions FROM tests WHERE id = ?", (test_id,))
-    test_name, questions_json = c_tests.fetchone()
-    questions = json.loads(questions_json)
+    c_results.execute("SELECT COUNT(*) FROM results WHERE test_id = ? AND full_name = ?",
+                      (test_id, callback_query.from_user.full_name))
+    count = c_results.fetchone()[0]
 
-    await state.update_data(test_id=test_id, test_name=test_name, questions=questions, current_question=0)
+    if count > 0:
+        c_results.execute("""
+            SELECT answer_text, created_at 
+            FROM results
+            WHERE test_id = ? AND full_name = ?
+            ORDER BY id
+        """, (test_id, callback_query.from_user.full_name))
+        results = c_results.fetchall()
 
-    await show_question(callback_query.message, state)
+        formatted_result = f"Вы уже проходили этот тест:\n\n"
+        for answer_text, created_at in results:
+            formatted_result += f"- {answer_text}\n"
+            formatted_result += f"  **Дата:** {created_at}\n\n"
+        await callback_query.message.answer(formatted_result.strip(), parse_mode=ParseMode.MARKDOWN)
+    else:
+        conn_tests = sqlite3.connect('data/data_base/tests.db')
+        c_tests = conn_tests.cursor()
 
-    conn_tests.close()
+        c_tests.execute("SELECT name, questions FROM tests WHERE id = ?", (test_id,))
+        test_name, questions_json = c_tests.fetchone()
+        questions = json.loads(questions_json)
+
+        await state.update_data(test_id=test_id, test_name=test_name, questions=questions, current_question=0)
+
+        await show_question(callback_query.message, state)
+
+        conn_tests.close()
+
+    conn_results.close()
     await callback_query.answer('')
-
 
 async def show_question(message: Message, state: FSMContext):
     data = await state.get_data()
@@ -107,15 +130,15 @@ async def process_student_answer(callback_query: CallbackQuery, state: FSMContex
     test_name = data['test_name']
     questions = data['questions']
     current_question = data['current_question']
-
-    selected_answer = callback_query.data.split("_")[-1]
+    selected_answer_index = int(callback_query.data.split("_")[-1])
+    selected_answer_text = questions[current_question]['answers'][selected_answer_index]
 
     conn_results = sqlite3.connect('data/data_base/results.db')
     c_results = conn_results.cursor()
 
-    c_results.execute("INSERT INTO results (test_id, test_name, full_name, answer, created_at)"
-                      " VALUES (?, ?, ?, ?, ?)",
-                      (test_id, test_name, callback_query.from_user.full_name, selected_answer,
+    c_results.execute("INSERT INTO results (test_id, test_name, full_name, answer, answer_text, created_at)"
+                      " VALUES (?, ?, ?, ?, ?, ?)",
+                      (test_id, test_name, callback_query.from_user.full_name, selected_answer_index+1, selected_answer_text,
                        datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
     conn_results.commit()
 

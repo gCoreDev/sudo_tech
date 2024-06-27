@@ -363,18 +363,30 @@ async def show_selected_test_results(callback_query: CallbackQuery, state: FSMCo
     conn_results = sqlite3.connect('data/data_base/results.db')
     c_results = conn_results.cursor()
 
-    c_results.execute("SELECT full_name, answer, created_at FROM results WHERE test_name = ?",
-                      (test_name,))
+    c_results.execute("""
+        SELECT full_name, answer_text, created_at 
+        FROM results
+        WHERE test_name = ?
+    """, (test_name,))
     results = c_results.fetchall()
 
     if results:
         formatted_results = f"Тест: {test_name}\n\n"
+        current_student = None
         for row in results:
-            formatted_results += f"Студент: {row[0]}\n"
-            formatted_results += f"Ответ: {row[1]}\n"
-            formatted_results += f"Дата: {row[2]}\n\n"
+            student_name = row[0]
+            if student_name != current_student:
+                if current_student is not None:
+                    formatted_results += "\n"
+                formatted_results += f"Студент: {student_name}\n"
+                current_student = student_name
+            if row[1]:
+                formatted_results += f"- {row[1]}\n"
+            else:
+                formatted_results += f"- Ответ отсутствует\n"
+            formatted_results += f"  **Дата:** {row[2]}\n"
     else:
         formatted_results = f"Для теста '{test_name}' нет результатов."
 
-    await callback_query.message.answer(formatted_results.strip())
+    await callback_query.message.answer(formatted_results.strip(), parse_mode=ParseMode.MARKDOWN)
     await callback_query.answer('')
