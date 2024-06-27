@@ -10,6 +10,7 @@ from config import TOKEN, STUDENT_ID
 import json
 import sqlite3
 from datetime import datetime
+from .student import TeacherContact
 
 bot = Bot(token=TOKEN)
 
@@ -158,7 +159,43 @@ async def test_q1_answer3(message: Message, state: FSMContext):
 
 @teach.message(WorkTest.q1_answer4)
 async def test_q1_answer4(message: Message, state: FSMContext):
+
     await state.update_data(q1_answer4=message.text)
+    await state.set_state(WorkTest.quest2)
+    await message.answer('Отлично, теперь напишите вопрос №2')
+
+
+@teach.message(WorkTest.quest2)
+async def test_quest2(message: Message, state: FSMContext):
+    await state.update_data(question2=message.text)
+    await state.set_state(WorkTest.q2_answer1)
+    await message.answer('Напишите первый вариант ответа')
+
+
+@teach.message(WorkTest.q2_answer1)
+async def test_q2_answer1(message: Message, state: FSMContext):
+    await state.update_data(q2_answer1=message.text)
+    await state.set_state(WorkTest.q2_answer2)
+    await message.answer('Напишите второй вариант ответа')
+
+
+@teach.message(WorkTest.q2_answer2)
+async def test_q2_answer2(message: Message, state: FSMContext):
+    await state.update_data(q2_answer2=message.text)
+    await state.set_state(WorkTest.q2_answer3)
+    await message.answer('Напишите третий вариант ответа')
+
+
+@teach.message(WorkTest.q2_answer3)
+async def test_q2_answer3(message: Message, state: FSMContext):
+    await state.update_data(q2_answer3=message.text)
+    await state.set_state(WorkTest.q2_answer4)
+    await message.answer('Напишите четвертый вариант ответа')
+
+
+@teach.message(WorkTest.q2_answer4)
+async def test_q2_answer4(message: Message, state: FSMContext):
+    await state.update_data(q2_answer4=message.text)
     data = await state.get_data()
     await state.clear()
 
@@ -173,33 +210,46 @@ async def test_q1_answer4(message: Message, state: FSMContext):
                     data['q1_answer3'],
                     data['q1_answer4']
                 ]
+            },
+            {
+                'question': data.get('question2'),
+                'answers': [
+                    data.get('q2_answer1', ''),
+                    data.get('q2_answer2', ''),
+                    data.get('q2_answer3', ''),
+                    data.get('q2_answer4', '')
+                ]
             }
         ]
     }
 
     save_test(test_data)
 
-    formated_text = []
-    for key, value in test_data['questions'][0].items():
-        if key == 'answers':
-            formated_text.append(f'*Варианты ответа*:')
-            for answer in value:
-                formated_text.append(f'- `{answer}`')
-        else:
-            formated_text.append(f'*{key}*: `{value}`')
+    formatted_text = []
+    for question_index, question in enumerate(test_data['questions'], start=1):
+        formatted_text.append(f'*Вопрос {question_index}*: `{question["question"]}`')
+        formatted_text.append(f'*Варианты ответа*:')
+        for answer in question['answers']:
+            formatted_text.append(f'- `{answer}`')
+        formatted_text.append('')
+
     await message.answer(
-        f'Составленный тест:\n\n{"\n".join(formated_text)}',
+        f'Составленный тест:\n\n{"\n".join(formatted_text)}',
         reply_markup=kb.teacher_panel(),
         parse_mode=ParseMode.MARKDOWN
     )
 
 
 def save_test(test_data):
-    cur.execute("INSERT INTO tests (name, questions, created_at) VALUES (?, ?, ?)",
-                (test_data['name'],
-                 json.dumps(test_data['questions']),
-                 datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+    conn = sqlite3.connect('data/data_base/tests.db')
+    c = conn.cursor()
+
+    c.execute("INSERT INTO tests (name, questions, created_at) VALUES (?, ?, ?)",
+              (test_data['name'],
+               json.dumps(test_data['questions']),
+               datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
     conn.commit()
+    conn.close()
 
 
 @teach.message(F.text == 'Список тестов')
@@ -243,34 +293,36 @@ async def show_selected_test(callback_query: CallbackQuery):
 
 
 @teach.callback_query(F.data.startswith("send_test_"))
-async def send_test_to_students(message: Message):
+async def send_test_to_students(callback_query: CallbackQuery, state: FSMContext):
+    test_id = int(callback_query.data.split("_")[-1])
+
     conn_tests = sqlite3.connect('data/data_base/tests.db')
     c_tests = conn_tests.cursor()
 
-    c_tests.execute("SELECT id, name, questions FROM tests")
-    tests = c_tests.fetchall()
+    c_tests.execute("SELECT name, questions FROM tests WHERE id = ?", (test_id,))
+    test_name, questions_json = c_tests.fetchone()
+    questions = json.loads(questions_json)
 
-    for test_id, test_name, questions_json in tests:
-        questions = json.loads(questions_json)
+    conn_users = sqlite3.connect('data/data_base/users.db')
+    c_users = conn_users.cursor()
 
-        conn_users = sqlite3.connect('data/data_base/users.db')
-        c_users = conn_users.cursor()
+    c_users.execute("SELECT user_id FROM users WHERE user_type = 'student'")
+    student_ids = [row[0] for row in c_users.fetchall()]
 
-        c_users.execute("SELECT user_id FROM users WHERE user_type = 'student'")
-        student_ids = [row[0] for row in c_users.fetchall()]
+    for student_id in student_ids:
+        keyboard = InlineKeyboardMarkup(inline_keyboard=[
+            [InlineKeyboardButton(text='Начать тест', callback_data=f"start_test_{test_id}")]
+        ])
 
-        for student_id in student_ids:
-            await bot.send_message(
-                student_id,
-                f"*Уведомление*\n*Вам направили тест: {test_name}*\n\nПожалуйста, сделайте его в ближайшее время,\n"
-                f"Протйи тест вы можете нажав по кнопке *показать тесты.*",
-                parse_mode=ParseMode.MARKDOWN
-            )
-        conn_users.close()
+        await bot.send_message(
+            student_id,
+            f"Вам пришел тест на прохождение '{test_name}'. Нажмите на кнопку, чтобы начать.",
+            reply_markup=keyboard
+        )
 
+    conn_users.close()
     conn_tests.close()
-    await message.answer("Тесты отправлены студентам.")
-
+    await callback_query.message.edit_text("Тест отправлен студентам.")
 
 @teach.callback_query(F.data == "back")
 async def back_to_tests_list(callback_query: CallbackQuery):

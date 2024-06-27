@@ -10,6 +10,7 @@ import handlers.keyboards as kb
 from config import TOKEN, TEACHER_ID
 import sqlite3
 
+
 std = Router()
 
 bot = Bot(token=TOKEN)
@@ -29,11 +30,6 @@ cur.execute('''CREATE TABLE IF NOT EXISTS results
               created_at TEXT)''')
 
 conn.commit()
-
-
-class TeacherContact(StatesGroup):
-    waiting_for_message = State()
-    waiting_for_response1 = State()
 
 
 @std.message(F.text == 'Показать тесты')
@@ -65,22 +61,11 @@ async def start_test(callback_query: CallbackQuery, state: FSMContext):
     test_name, questions_json = c_tests.fetchone()
     questions = json.loads(questions_json)
 
-    conn_results = sqlite3.connect('data/data_base/results.db')
-    c_results = conn_results.cursor()
-
-    c_results.execute("SELECT * FROM results WHERE test_id = ? AND full_name = ?", (test_id, callback_query.from_user.full_name))
-    if c_results.fetchone():
-        await callback_query.answer("Вы уже проходили этот тест.")
-        conn_tests.close()
-        conn_results.close()
-        return
-
     await state.update_data(test_id=test_id, test_name=test_name, questions=questions, current_question=0)
 
     await show_question(callback_query.message, state)
 
     conn_tests.close()
-    conn_results.close()
     await callback_query.answer('')
 
 
@@ -94,43 +79,39 @@ async def show_question(message: Message, state: FSMContext):
     if current_question < len(questions):
         question = questions[current_question]
         keyboard = InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text=answer, callback_data=f"answer_{answer}")]
-            for answer in question['answers']
+            [InlineKeyboardButton(text=answer, callback_data=f"answer_{test_id}_{current_question}_{i}")]
+            for i, answer in enumerate(question['answers'])
         ])
 
-        await message.answer(
-            f"*Тест: {test_name}*\n\n*Вопрос {current_question + 1}:* *{question['question']}*\n\nВарианты ответа:",
+        msg = await message.answer(
+            f"*Тест: {test_name}*\n\n*Вопрос {current_question+1}:* *{question['question']}*\n\nВарианты ответа:",
             reply_markup=keyboard,
             parse_mode=ParseMode.MARKDOWN
         )
+        await state.update_data(question_message_id=msg.message_id)
     else:
+        question_message_id = (await state.get_data()).get('question_message_id')
+        if question_message_id:
+            await bot.delete_message(chat_id=message.chat.id, message_id=question_message_id)
+
         await state.clear()
         await message.answer("*Вы успешно закончили прохождение теста!*\n"
-                             "Ваши результаты были направлены преподавателю.", parse_mode=ParseMode.MARKDOWN)
+                             "Ваши результаты были направлены преподавателю.",
+                             parse_mode=ParseMode.MARKDOWN)
 
 
 @std.callback_query(lambda c: c.data.startswith("answer_"))
 async def process_student_answer(callback_query: CallbackQuery, state: FSMContext):
     data = await state.get_data()
-    test_id = data.get('test_id', None)
+    test_id = data['test_id']
     test_name = data['test_name']
     questions = data['questions']
     current_question = data['current_question']
-
-    if test_id is None:
-        await callback_query.answer("Тест не найден.")
-        return
 
     selected_answer = callback_query.data.split("_")[-1]
 
     conn_results = sqlite3.connect('data/data_base/results.db')
     c_results = conn_results.cursor()
-
-    c_results.execute("SELECT * FROM results WHERE test_id = ? AND full_name = ?", (test_id, callback_query.from_user.full_name))
-    if c_results.fetchone():
-        await callback_query.answer("Вы уже проходили этот тест.")
-        conn_results.close()
-        return
 
     c_results.execute("INSERT INTO results (test_id, test_name, full_name, answer, created_at)"
                       " VALUES (?, ?, ?, ?, ?)",
@@ -138,10 +119,29 @@ async def process_student_answer(callback_query: CallbackQuery, state: FSMContex
                        datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
     conn_results.commit()
 
-    await state.update_data(current_question=current_question+1)
-    await show_question(callback_query.message, state)
-    await callback_query.answer('')
-    conn_results.close()
+    if current_question < len(questions) - 1:
+        await state.update_data(current_question=current_question+1)
+        question = questions[current_question+1]
+        keyboard = InlineKeyboardMarkup(inline_keyboard=[
+            [InlineKeyboardButton(text=answer, callback_data=f"answer_{test_id}_{current_question+1}_{i}")]
+            for i, answer in enumerate(question['answers'])
+        ])
+
+        await callback_query.message.edit_text(
+            f"*Тест: {test_name}*\n\n*Вопрос {current_question+2}:* *{question['question']}*\n\nВарианты ответа:",
+            reply_markup=keyboard,
+            parse_mode=ParseMode.MARKDOWN
+        )
+    else:
+        await state.clear()
+        await callback_query.message.edit_text("*Вы успешно закончили прохождение теста!*\n"
+                                               "Ваши результаты были направлены преподавателю.",
+                                               parse_mode=ParseMode.MARKDOWN)
+
+
+class TeacherContact(StatesGroup):
+    waiting_for_message = State()
+    waiting_for_response1 = State()
 
 
 async def send_message_to_teacher(message: Message):
@@ -184,6 +184,7 @@ async def teacher_connect_text(message: Message, state: FSMContext):
     await send_message_to_teacher(message)
     await message.answer('Сообщение успешно отправлено')
     await state.clear()
+
 
 
 @std.message(F.text == 'Учебные материалы')

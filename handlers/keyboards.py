@@ -1,5 +1,5 @@
 from aiogram.types import (ReplyKeyboardMarkup, KeyboardButton,
-                           InlineKeyboardMarkup, InlineKeyboardButton)
+                           InlineKeyboardMarkup, InlineKeyboardButton, message)
 from aiogram.utils.keyboard import ReplyKeyboardBuilder
 
 main = ReplyKeyboardMarkup(keyboard=[
@@ -26,8 +26,9 @@ answer = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text='Ответить', callback_data='answer')]
 ])
 
+
 st_answer = InlineKeyboardMarkup(inline_keyboard=[
-    [InlineKeyboardButton(text='Ответить', callback_data='st_answer')]
+    [InlineKeyboardButton(text="Ответить", callback_data='st_answer')]
 ])
 
 
