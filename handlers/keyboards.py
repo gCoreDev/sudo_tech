@@ -3,32 +3,36 @@ from aiogram.types import (ReplyKeyboardMarkup, KeyboardButton,
 from aiogram.utils.keyboard import ReplyKeyboardBuilder
 
 main = ReplyKeyboardMarkup(keyboard=[
-    [KeyboardButton(text='Личный кабинет')],
-    [KeyboardButton(text='Узнать о боте'),
-     KeyboardButton(text='Сайт колледжа')],
-    [KeyboardButton(text='Новости колледжа')]
+    [KeyboardButton(text='Личный кабинет 👤')],
+    [KeyboardButton(text='Узнать о боте 📖'),
+     KeyboardButton(text='Сайт колледжа 💻')],
+    [KeyboardButton(text='Новости колледжа 📢')]
 ],
     resize_keyboard=True,
     input_field_placeholder='Выберите пункт меню')
 
 site = InlineKeyboardMarkup(inline_keyboard=[
-    [InlineKeyboardButton(text='Перейти на сайт колледжа', url='https://www.ekvl.ru/')]
+    [InlineKeyboardButton(text='Перейти на сайт колледжа 💻', url='https://www.ekvl.ru/')]
 ])
 
 group = InlineKeyboardMarkup(inline_keyboard=[
-    [InlineKeyboardButton(text='Перейти в канал колледжа:', url='https://t.me/EnergyCollege')]
+    [InlineKeyboardButton(text='Перейти в канал колледжа 👨‍💻', url='https://t.me/EnergyCollege')]
 ])
 
-data = ('Показать пользователей', 'Изменить тип пользователя',
-        'Удалить пользователя', 'Сделать рассылку', 'Назад')
+data = ('Показать пользователей 👤',
+        'Изменить тип пользователя ✏️',
+        'Удалить пользователя ✖️',
+        'Сделать рассылку 📢',
+        'Расписание 🗓',
+        'Назад 🔙')
 
 answer = InlineKeyboardMarkup(inline_keyboard=[
-    [InlineKeyboardButton(text='Ответить', callback_data='answer')]
+    [InlineKeyboardButton(text='Ответить 📞', callback_data='answer')]
 ])
 
 
 st_answer = InlineKeyboardMarkup(inline_keyboard=[
-    [InlineKeyboardButton(text="Ответить", callback_data='st_answer')]
+    [InlineKeyboardButton(text="Ответить 📞", callback_data='st_answer')]
 ])
 
 
@@ -39,9 +43,12 @@ def admin_panel():
     return keyboard.adjust(2).as_markup(resize_keyboard=True)
 
 
-data_std = ('Показать тесты', 'Связь с преподавателем',
-            'Учебные материалы', 'Расписание пар',
-            'Меню столовой', 'Назад')
+data_std = ('Показать тесты 🧑‍💻',
+            'Связь с преподавателем ☎️',
+            'Учебные материалы 📚',
+            'Расписание пар 🗓',
+            'Меню столовой 🍫',
+            'Назад 🔙')
 
 
 def std_panel():
@@ -51,8 +58,12 @@ def std_panel():
     return keyboard.adjust(2).as_markup(resize_keyboard=True)
 
 
-key_teacher = ('Создать тест', 'Рассылка группе', 'Связь с админом', 'Список тестов',
-               'Показать результаты', 'Назад')
+key_teacher = ('Создать тест ➕',
+               'Список тестов 📖',
+               'Показать результаты ✅',
+               'Рассылка группе 📢',
+               'Связь с админом ☎️',
+               'Назад 🔙')
 
 
 def teacher_panel():
@@ -63,20 +74,20 @@ def teacher_panel():
 
 
 docs_panel = InlineKeyboardMarkup(inline_keyboard=[
-    [InlineKeyboardButton(text='Реферат', callback_data='Ref')],
-    [InlineKeyboardButton(text='Курсовая', callback_data='Kur')],
-    [InlineKeyboardButton(text='Отчет по практике', callback_data='Otc')],
-    [InlineKeyboardButton(text='Дипломная работа', callback_data='Dip')],
-    [InlineKeyboardButton(text='Оформление документа', callback_data='Gos')]
+    [InlineKeyboardButton(text='Реферат 📗', callback_data='Ref')],
+    [InlineKeyboardButton(text='Курсовая 📓', callback_data='Kur')],
+    [InlineKeyboardButton(text='Отчет по практике 📕', callback_data='Otc')],
+    [InlineKeyboardButton(text='Дипломная работа 📙', callback_data='Dip')],
+    [InlineKeyboardButton(text='Оформление документа 📘', callback_data='Gos')]
 ])
 
 week_plan = InlineKeyboardMarkup(inline_keyboard=[
     [
-        InlineKeyboardButton(text='Загрузить', callback_data='upload_week_plan'),
-        InlineKeyboardButton(text='Посмотреть', callback_data='check_week_plan')
+        InlineKeyboardButton(text='Загрузить 🆕', callback_data='upload_week_plan'),
+        InlineKeyboardButton(text='Посмотреть 👀', callback_data='check_week_plan')
     ],
     [
-        InlineKeyboardButton(text='Удалить', callback_data='del_week_plan')
+        InlineKeyboardButton(text='Удалить 🗑', callback_data='del_week_plan')
     ]
 ])
 
@@ -93,5 +104,5 @@ groups_college = InlineKeyboardMarkup(inline_keyboard=[
 ])
 
 cancel = ReplyKeyboardMarkup(keyboard=[
-    [KeyboardButton(text='Выйти из создания теста')]
+    [KeyboardButton(text='Выйти из создания теста 🙅')]
 ], resize_keyboard=True)

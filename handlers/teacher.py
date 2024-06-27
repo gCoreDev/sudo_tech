@@ -47,17 +47,6 @@ async def teacher_response(message: Message, state: FSMContext):
     await state.clear()
 
 
-@teach.message(F.text == 'Расписание')
-async def week_plan(message: Message):
-    await message.answer('Выберите действие над расписанием', reply_markup=kb.week_plan)
-
-
-@teach.callback_query(F.data == 'upload_week_plan')
-async def data_upload_week_plan(callback: CallbackQuery):
-    await callback.answer('')
-    await callback.message.answer('Чтобы загрузить расписание, отправьте мне файл в формате .xlxs')
-
-
 @teach.callback_query(F.data == 'check_week_data')
 async def data_check_week_data(callback: CallbackQuery):
     await callback.answer('')
@@ -474,6 +463,7 @@ async def send_test_to_students(callback_query: CallbackQuery, state: FSMContext
     conn_tests.close()
     await callback_query.message.edit_text("Тест отправлен студентам.")
 
+
 @teach.callback_query(F.data == "back")
 async def back_to_tests_list(callback_query: CallbackQuery):
     cur.execute("SELECT id, name, created_at FROM tests")
@@ -531,10 +521,10 @@ async def show_selected_test_results(callback_query: CallbackQuery, state: FSMCo
                 formatted_results += f"Студент: {student_name}\n"
                 current_student = student_name
             if row[1]:
-                formatted_results += f"- {row[1]}\n"
+                formatted_results += f"➖ *{row[1]}*\n"
             else:
-                formatted_results += f"- Ответ отсутствует\n"
-            formatted_results += f"  **Дата:** {row[2]}\n"
+                formatted_results += f"➖ *Ответ отсутствует*\n"
+            formatted_results += f"  _Дата: {row[2]}_ ⏳\n"
     else:
         formatted_results = f"Для теста '{test_name}' нет результатов."
 

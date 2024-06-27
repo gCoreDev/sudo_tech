@@ -209,7 +209,6 @@ async def teacher_connect_text(message: Message, state: FSMContext):
     await state.clear()
 
 
-
 @std.message(F.text == 'Учебные материалы')
 async def cmd_docs(message: Message):
     await message.answer('Учебные документы и шаблоны', reply_markup=kb.docs_panel)

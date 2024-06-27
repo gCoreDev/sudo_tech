@@ -1,6 +1,6 @@
 from aiogram import F, Router
 from aiogram.filters import Command
-from aiogram.types import Message
+from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.context import FSMContext
 from aiogram.enums.parse_mode import ParseMode
@@ -11,7 +11,7 @@ from config import TOKEN, bot, DATA_DIR
 
 admin = Router()
 
-conn = sqlite3.connect(DATA_DIR/'data_base/users.db')
+conn = sqlite3.connect(DATA_DIR / 'data_base/users.db')
 cur = conn.cursor()
 
 
@@ -187,3 +187,29 @@ async def text_send_message(message: Message, state: FSMContext):
     await state.clear()
 
 
+@admin.message(F.text == 'Расписание')
+async def week_plan(message: Message):
+    await message.answer('Выберите действие над расписанием', reply_markup=kb.week_plan)
+
+
+@admin.callback_query(F.data == 'upload_week_plan')
+async def data_upload_week_plan(callback: CallbackQuery):
+    await callback.answer('')
+    await callback.message.answer('Чтобы загрузить расписание, отправьте мне файл в формате .xlxs')
+
+
+@admin.callback_query(F.data == 'check_week_plan')
+async def data_check_week_plan(callback: CallbackQuery):
+    await callback.answer('')
+    await callback.message.answer('<b>Расписание на понедельник:</b>\n'
+                                  '1) Математика - Николай И.Н. 301 каб \n'
+                                  '2) Русский язык - Иванова А.М. 105 каб.\n'
+                                  '3) Информатика - Лебедев Н.О. 224 каб.\n'
+                                  '4) Физкультура - Елисеев А.П. 111 каб.',
+                                  parse_mode=ParseMode.HTML)
+
+
+@admin.callback_query(F.data == 'del_week_plan')
+async def data_del_week_plan(callback: CallbackQuery):
+    await callback.answer('')
+    await callback.message.answer('Введите команду /del week_plan')
