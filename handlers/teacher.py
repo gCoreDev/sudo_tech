@@ -107,26 +107,44 @@ class WorkTest(StatesGroup):
     q3_answer2 = State()
     q3_answer3 = State()
     q3_answer4 = State()
+    quest4 = State()
+    q4_answer1 = State()
+    q4_answer2 = State()
+    q4_answer3 = State()
+    q4_answer4 = State()
+    quest5 = State()
+    q5_answer1 = State()
+    q5_answer2 = State()
+    q5_answer3 = State()
+    q5_answer4 = State()
 
 
 @teach.message(F.text == 'Создать тест')
 async def text_create_test(message: Message, state: FSMContext):
     await state.set_state(WorkTest.name_quest)
-    await message.answer('Напишите название теста', reply_markup=kb.cancel)
+    await message.answer(f'Напишите название теста\n'
+                         f'*Примечание: Название теста не должно быть длинее 63 символов!*',
+                         reply_markup=kb.cancel,
+                         parse_mode=ParseMode.MARKDOWN)
 
 
 @teach.message(F.text == 'Выйти из создания теста')
 async def cmd_cancel(message: Message, state: FSMContext):
     await state.clear()
-    await message.answer(f'<b>Создание теста прекращено</b>', parse_mode=ParseMode.HTML,
+    await message.answer(f'*Создание теста прекращено*', parse_mode=ParseMode.MARKDOWN,
                          reply_markup=kb.teacher_panel())
 
 
 @teach.message(WorkTest.name_quest)
 async def test_name_quest(message: Message, state: FSMContext):
-    await state.update_data(name_quest=message.text)
-    await state.set_state(WorkTest.quest1)
-    await message.answer('Отлично! Напишите вопроc №1')
+    name_quest = message.text.strip()
+    if len(name_quest) > 63:
+        await message.answer("Название теста не должно превышать 63 символа."
+                             " Пожалуйста, введите название заново.")
+    else:
+        await state.update_data(name_quest=name_quest)
+        await state.set_state(WorkTest.quest1)
+        await message.answer('Отлично! теперь напишите вопрос №1')
 
 
 @teach.message(WorkTest.quest1)
@@ -197,8 +215,7 @@ async def test_q2_answer3(message: Message, state: FSMContext):
 async def test_q2_answer4(message: Message, state: FSMContext):
     await state.update_data(q2_answer4=message.text)
     await state.set_state(WorkTest.quest3)
-    await message.answer('Напишите вопрос №3')
-
+    await message.answer('Отлично, теперь напишите вопрос №3')
 
 
 @teach.message(WorkTest.quest3)
@@ -232,6 +249,76 @@ async def test_q3_answer3(message: Message, state: FSMContext):
 @teach.message(WorkTest.q3_answer4)
 async def test_q3_answer4(message: Message, state: FSMContext):
     await state.update_data(q3_answer4=message.text)
+    await state.set_state(WorkTest.quest4)
+    await message.answer('Отлично, теперь напишите вопрос №4')
+
+
+@teach.message(WorkTest.quest4)
+async def test_quest4(message: Message, state: FSMContext):
+    await state.update_data(question4=message.text)
+    await state.set_state(WorkTest.q4_answer1)
+    await message.answer('Напишите первый вариант ответа')
+
+
+@teach.message(WorkTest.q4_answer1)
+async def test_q4_answer1(message: Message, state: FSMContext):
+    await state.update_data(q4_answer1=message.text)
+    await state.set_state(WorkTest.q4_answer2)
+    await message.answer('Напишите второй вариант ответа')
+
+
+@teach.message(WorkTest.q4_answer2)
+async def test_q4_answer2(message: Message, state: FSMContext):
+    await state.update_data(q4_answer2=message.text)
+    await state.set_state(WorkTest.q4_answer3)
+    await message.answer('Напишите третий вариант ответа')
+
+
+@teach.message(WorkTest.q4_answer3)
+async def test_q4_answer3(message: Message, state: FSMContext):
+    await state.update_data(q4_answer3=message.text)
+    await state.set_state(WorkTest.q4_answer4)
+    await message.answer('Напишите четвертый вариант ответа')
+
+
+@teach.message(WorkTest.q4_answer4)
+async def test_q4_answer4(message: Message, state: FSMContext):
+    await state.update_data(q4_answer4=message.text)
+    await state.set_state(WorkTest.quest5)
+    await message.answer('Отлично, теперь напишите вопрос №5')
+
+
+@teach.message(WorkTest.quest5)
+async def test_quest5(message: Message, state: FSMContext):
+    await state.update_data(question5=message.text)
+    await state.set_state(WorkTest.q5_answer1)
+    await message.answer('Напишите первый вариант ответа')
+
+
+@teach.message(WorkTest.q5_answer1)
+async def test_q5_answer1(message: Message, state: FSMContext):
+    await state.update_data(q5_answer1=message.text)
+    await state.set_state(WorkTest.q5_answer2)
+    await message.answer('Напишите второй вариант ответа')
+
+
+@teach.message(WorkTest.q5_answer2)
+async def test_q5_answer2(message: Message, state: FSMContext):
+    await state.update_data(q5_answer2=message.text)
+    await state.set_state(WorkTest.q5_answer3)
+    await message.answer('Напишите третий вариант ответа')
+
+
+@teach.message(WorkTest.q5_answer3)
+async def test_q5_answer3(message: Message, state: FSMContext):
+    await state.update_data(q5_answer3=message.text)
+    await state.set_state(WorkTest.q5_answer4)
+    await message.answer('Напишите четвертый вариант ответа')
+
+
+@teach.message(WorkTest.q5_answer4)
+async def test_q5_answer4(message: Message, state: FSMContext):
+    await state.update_data(q5_answer4=message.text)
     data = await state.get_data()
     await state.clear()
 
@@ -263,6 +350,24 @@ async def test_q3_answer4(message: Message, state: FSMContext):
                     data.get('q3_answer2', ''),
                     data.get('q3_answer3', ''),
                     data.get('q3_answer4', '')
+                ]
+            },
+            {
+                'question': data.get('question4'),
+                'answers': [
+                    data.get('q4_answer1', ''),
+                    data.get('q4_answer2', ''),
+                    data.get('q4_answer3', ''),
+                    data.get('q4_answer4', '')
+                ]
+            },
+            {
+                'question': data.get('question5'),
+                'answers': [
+                    data.get('q5_answer1', ''),
+                    data.get('q5_answer2', ''),
+                    data.get('q5_answer3', ''),
+                    data.get('q5_answer4', '')
                 ]
             }
         ]
