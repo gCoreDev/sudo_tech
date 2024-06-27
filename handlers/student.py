@@ -98,26 +98,15 @@ async def show_question(message: Message, state: FSMContext):
             for answer in question['answers']
         ])
 
+        await message.answer(
+            f"*Тест: {test_name}*\n\n*Вопрос {current_question + 1}:* *{question['question']}*\n\nВарианты ответа:",
+            reply_markup=keyboard,
+            parse_mode=ParseMode.MARKDOWN
+        )
+    else:
         await state.clear()
-        keyboard = InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text="Удалить тест", callback_data="delete_test")]
-        ])
         await message.answer("*Вы успешно закончили прохождение теста!*\n"
-                             "Ваши результаты были направлены преподавателю.\n\n"
-                             "Нажмите кнопку, чтобы скрыть тест из списка доступных.",
-                             reply_markup=keyboard,
-                             parse_mode=ParseMode.MARKDOWN)
-
-
-@std.callback_query(lambda c: c.data == "delete_test")
-async def delete_test(callback_query: CallbackQuery, state: FSMContext):
-    data = await state.get_data()
-    test_id = data['test_id']
-
-    await callback_query.message.delete()
-    await callback_query.answer("Тест успешно скрыт.")
-
-    await state.update_data(hidden_tests=test_id)
+                             "Ваши результаты были направлены преподавателю.", parse_mode=ParseMode.MARKDOWN)
 
 
 @std.callback_query(lambda c: c.data.startswith("answer_"))
