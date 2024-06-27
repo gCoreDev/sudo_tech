@@ -243,7 +243,7 @@ async def show_selected_test(callback_query: CallbackQuery):
 
 
 @teach.callback_query(F.data.startswith("send_test_"))
-async def send_test_to_students(message: Message, state: FSMContext):
+async def send_test_to_students(message: Message):
     conn_tests = sqlite3.connect('data/data_base/tests.db')
     c_tests = conn_tests.cursor()
 
@@ -263,7 +263,7 @@ async def send_test_to_students(message: Message, state: FSMContext):
             await bot.send_message(
                 student_id,
                 f"*Уведомление*\n*Вам направили тест: {test_name}*\n\nПожалуйста, сделайте его в ближайшее время,\n"
-                f"Протйи тест вы можете нажав по кнопке показать тесты.",
+                f"Протйи тест вы можете нажав по кнопке *показать тесты.*",
                 parse_mode=ParseMode.MARKDOWN
             )
         conn_users.close()
