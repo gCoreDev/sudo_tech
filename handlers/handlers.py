@@ -95,12 +95,12 @@ async def cmd_table(message: Message):
         await message.answer("Таблица пуста или не содержит заполненных ячеек.")
 
 
-@hand.message(F.text == 'Назад')
+@hand.message(F.text == 'Назад 🔙')
 async def cmd_start_back(message: Message):
     await cmd_start(message)
 
 
-@hand.message(F.text == 'Узнать о боте')
+@hand.message(F.text == 'Узнать о боте 📖')
 async def cmd_about(message: Message):
     await message.bot.send_chat_action(chat_id=message.from_user.id,
                                        action=ChatAction.TYPING)
@@ -113,7 +113,7 @@ async def cmd_about(message: Message):
                         f'обратитесь к вашему куратору.')
 
 
-@hand.message(F.text == 'Сайт колледжа')
+@hand.message(F.text == 'Сайт колледжа 💻')
 async def cmd_site(message: Message):
     await message.answer_photo(photo='https://lh3.googleusercontent.com'
                                      '/p/AF1QipM8MkG4sv0a2Fk-hQYESG-H3A'
@@ -121,7 +121,7 @@ async def cmd_site(message: Message):
     await message.answer('Сайт энергетического колледжа', reply_markup=kb.site)
 
 
-@hand.message(F.text == 'Новости колледжа')
+@hand.message(F.text == 'Новости колледжа 📢')
 async def cmd_group(message: Message):
     await message.answer_photo(photo='https://proverili.ru/uploads/media/'
                                      '5236/1.jpg')

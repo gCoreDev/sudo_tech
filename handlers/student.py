@@ -10,7 +10,6 @@ import handlers.keyboards as kb
 from config import TOKEN, TEACHER_ID
 import sqlite3
 
-
 std = Router()
 
 bot = Bot(token=TOKEN)
@@ -32,7 +31,7 @@ cur.execute('''CREATE TABLE IF NOT EXISTS results
 conn.commit()
 
 
-@std.message(F.text == 'Показать тесты')
+@std.message(F.text == 'Показать тесты 🧑‍💻')
 async def show_test(message: Message):
     await message.answer("*Выберите тест, который хотите пройти.*", parse_mode=ParseMode.MARKDOWN)
 
@@ -72,8 +71,8 @@ async def start_test(callback_query: CallbackQuery, state: FSMContext):
 
         formatted_result = f"Вы уже проходили этот тест:\n\n"
         for answer_text, created_at in results:
-            formatted_result += f"- {answer_text}\n"
-            formatted_result += f"  **Дата:** {created_at}\n\n"
+            formatted_result += f"➖ *{answer_text}*\n"
+            formatted_result += f"  _Дата: {created_at}_ ⏳\n\n"
         await callback_query.message.answer(formatted_result.strip(), parse_mode=ParseMode.MARKDOWN)
     else:
         conn_tests = sqlite3.connect('data/data_base/tests.db')
@@ -92,6 +91,7 @@ async def start_test(callback_query: CallbackQuery, state: FSMContext):
     conn_results.close()
     await callback_query.answer('')
 
+
 async def show_question(message: Message, state: FSMContext):
     data = await state.get_data()
     test_id = data['test_id']
@@ -107,7 +107,7 @@ async def show_question(message: Message, state: FSMContext):
         ])
 
         msg = await message.answer(
-            f"*Тест: {test_name}*\n\n*Вопрос {current_question+1}:* *{question['question']}*\n\nВарианты ответа:",
+            f"*Тест: {test_name}*\n\n*Вопрос {current_question + 1}:* *{question['question']}*\n\nВарианты ответа:",
             reply_markup=keyboard,
             parse_mode=ParseMode.MARKDOWN
         )
@@ -138,20 +138,21 @@ async def process_student_answer(callback_query: CallbackQuery, state: FSMContex
 
     c_results.execute("INSERT INTO results (test_id, test_name, full_name, answer, answer_text, created_at)"
                       " VALUES (?, ?, ?, ?, ?, ?)",
-                      (test_id, test_name, callback_query.from_user.full_name, selected_answer_index+1, selected_answer_text,
+                      (test_id, test_name, callback_query.from_user.full_name, selected_answer_index + 1,
+                       selected_answer_text,
                        datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
     conn_results.commit()
 
     if current_question < len(questions) - 1:
-        await state.update_data(current_question=current_question+1)
-        question = questions[current_question+1]
+        await state.update_data(current_question=current_question + 1)
+        question = questions[current_question + 1]
         keyboard = InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text=answer, callback_data=f"answer_{test_id}_{current_question+1}_{i}")]
+            [InlineKeyboardButton(text=answer, callback_data=f"answer_{test_id}_{current_question + 1}_{i}")]
             for i, answer in enumerate(question['answers'])
         ])
 
         await callback_query.message.edit_text(
-            f"*Тест: {test_name}*\n\n*Вопрос {current_question+2}:* *{question['question']}*\n\nВарианты ответа:",
+            f"*Тест: {test_name}*\n\n*Вопрос {current_question + 2}:* *{question['question']}*\n\nВарианты ответа:",
             reply_markup=keyboard,
             parse_mode=ParseMode.MARKDOWN
         )
@@ -193,7 +194,7 @@ async def student_response(message: Message, state: FSMContext):
     await state.clear()
 
 
-@std.message(F.text == 'Связь с преподавателем')
+@std.message(F.text == 'Связь с преподавателем ☎️')
 async def teacher_contact(message: Message, state: FSMContext):
     await state.update_data(waiting_for_message=message.text)
     await state.set_state(TeacherContact.waiting_for_message)
@@ -209,25 +210,91 @@ async def teacher_connect_text(message: Message, state: FSMContext):
     await state.clear()
 
 
-@std.message(F.text == 'Учебные материалы')
+@std.message(F.text == 'Учебные материалы 📚')
 async def cmd_docs(message: Message):
     await message.answer('Учебные документы и шаблоны', reply_markup=kb.docs_panel)
 
 
-@std.message(F.text == 'Расписание пар')
-async def text_week_plan(message: Message):
-    await message.answer('<b>Расписание на понедельник:</b>\n'
-                         '1) Математика - Николай И.Н. 301 каб \n'
-                         '2) Русский язык - Иванова А.М. 105 каб.\n'
-                         '3) Информатика - Лебедев Н.О. 224 каб.\n'
-                         '4) Физкультура - Елисеев А.П. 111 каб.',
-                         parse_mode=ParseMode.HTML)
+@std.message(F.text == 'Расписание пар 🗓')
+async def show_schedule(message: Message):
+    schedule = {
+        'Понедельник': [
+            '1) Математика - Николай И.Н. 301 каб',
+            '2) Русский язык - Иванова А.М. 105 каб.',
+            '3) Информатика - Лебедев Н.О. 224 каб.',
+            '4) Физкультура - Елисеев А.П. 111 каб.'
+        ],
+        'Вторник': [
+            '1) История - Петров С.В. 201 каб.',
+            '2) Литература - Сидорова Т.Ю. 105 каб.',
+            '3) Физика - Смирнов А.И. 302 каб.',
+            '4) Английский язык - Кузнецова М.Н. 107 каб.'
+        ],
+        'Среда': [
+            '1) Химия - Иванов П.П. 303 каб.',
+            '2) Биология - Сергеева Е.Д. 304 каб.',
+            '3) Обществознание - Соколов Д.В. 202 каб.',
+            '4) Технология - Петрова А.С. 106 каб.'
+        ],
+        'Четверг': [
+            '1) Алгебра - Николай И.Н. 301 каб.',
+            '2) Геометрия - Николай И.Н. 301 каб.',
+            '3) Физкультура - Елисеев А.П. 111 каб.',
+            '4) ОБЖ - Смирнов А.И. 302 каб.'
+        ],
+        'Пятница': [
+            '1) Русский язык - Иванова А.М. 105 каб.',
+            '2) Литература - Сидорова Т.Ю. 105 каб.',
+            '3) Информатика - Лебедев Н.О. 224 каб.',
+            '4) Английский язык - Кузнецова М.Н. 107 каб.'
+        ]
+    }
+
+    schedule_text = '<b>Расписание на неделю:</b>\n\n'
+    for day, lessons in schedule.items():
+        schedule_text += f'<b>{day}:</b>\n'
+        for lesson in lessons:
+            schedule_text += f'- {lesson}\n'
+        schedule_text += '\n'
+
+    await message.answer(schedule_text, parse_mode=ParseMode.HTML)
 
 
-@std.message(F.text == 'Меню столовой')
+@std.message(F.text == 'Меню столовой 🍫')
 async def text_menu(message: Message):
-    await message.answer('<b>Меню на сегодня:\n</b>'
-                         '1)Борщ со сметаной 🍜\n'
-                         '2)Макароны с куриной котлетой 🍝\n'
-                         '3)Компот 🧃',
-                         parse_mode=ParseMode.HTML)
+    menu = {
+        'Понедельник': [
+            '1) Борщ со сметаной 🍜 - 250 ккал',
+            '2) Макароны с куриной котлетой 🍝 - 450 ккал',
+            '3) Компот 🧃 - 100 ккал'
+        ],
+        'Вторник': [
+            '1) Гречневая каша с тушеной говядиной 🍲 - 380 ккал',
+            '2) Рыба в кляре с овощами 🐟 - 320 ккал',
+            '3) Кисель 🍹 - 80 ккал'
+        ],
+        'Среда': [
+            '1) Суп-лапша с курицей 🍜 - 220 ккал',
+            '2) Картофельное пюре с отбивной 🍽️ - 400 ккал',
+            '3) Морс 🧃 - 90 ккал'
+        ],
+        'Четверг': [
+            '1) Щи из свежей капусты 🍜 - 180 ккал',
+            '2) Рис с тушеной рыбой 🍲 - 350 ккал',
+            '3) Кисель 🍹 - 80 ккал'
+        ],
+        'Пятница': [
+            '1) Грибной суп 🍜 - 200 ккал',
+            '2) Пельмени с овощным салатом 🥟 - 420 ккал',
+            '3) Компот 🧃 - 100 ккал'
+        ]
+    }
+
+    menu_text = '<b>Меню на неделю:</b>\n\n'
+    for day, dishes in menu.items():
+        menu_text += f'<b>{day}:</b>\n'
+        for dish in dishes:
+            menu_text += f'- {dish}\n'
+        menu_text += '\n'
+
+    await message.answer(menu_text, parse_mode=ParseMode.HTML)

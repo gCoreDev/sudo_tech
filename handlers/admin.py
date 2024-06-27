@@ -7,7 +7,7 @@ from aiogram.enums.parse_mode import ParseMode
 import handlers.keyboards as kb
 import sqlite3
 
-from config import TOKEN, bot, DATA_DIR
+from config import bot, DATA_DIR
 
 admin = Router()
 
@@ -15,7 +15,7 @@ conn = sqlite3.connect(DATA_DIR / 'data_base/users.db')
 cur = conn.cursor()
 
 
-@admin.message(F.text == 'Личный кабинет')
+@admin.message(F.text == 'Личный кабинет 👤')
 async def per_acc_adm(message: Message):
     user_id = message.from_user.id
     user_full_name = message.from_user.full_name
@@ -135,18 +135,18 @@ async def cmd_del(message: Message):
     await message.answer(f"✅ Пользователь с ID {del_user_id} успешно удален из базы данных.")
 
 
-@admin.message(F.text == 'Показать пользователей')
+@admin.message(F.text == 'Показать пользователей 👤')
 async def cmd_text_users(message: Message):
     await cmd_users(message)
 
 
-@admin.message(F.text == 'Изменить тип пользователя')
+@admin.message(F.text == 'Изменить тип пользователя ✏️')
 async def cmd_text_edit(message: Message):
     await message.reply('Чтобы изменить тип учетной записи пользователя, напишите следующую команду \n'
                         '/edit (id пользователя) (тип пользователя)')
 
 
-@admin.message(F.text == 'Удалить пользователя')
+@admin.message(F.text == 'Удалить пользователя ✖️')
 async def cmd_text_del(message: Message):
     await message.reply('Чтобы удалить запись пользователя, напишите следующую команду \n'
                         '/del (id пользователя)')
@@ -168,7 +168,7 @@ async def send_message_to_all(message: Message):
         await bot.send_message(user_id, f'<b>Сообщение от админа</b>\n{message.text}', parse_mode=ParseMode.HTML)
 
 
-@admin.message(F.text == 'Сделать рассылку')
+@admin.message(F.text == 'Сделать рассылку 📢')
 async def send_message(message: Message, state: FSMContext):
     if await is_admin(message.from_user.id):
         await state.update_data(awaiting_message=message.text)
@@ -180,14 +180,14 @@ async def send_message(message: Message, state: FSMContext):
 
 @admin.message(SendMessage.awaiting_message)
 async def text_send_message(message: Message, state: FSMContext):
-    if message.text.startswith('Сделать рассылку'):
+    if message.text.startswith('Сделать рассылку 📢'):
         return
     await send_message_to_all(message)
     await message.answer('Сообщение успешно отправлено')
     await state.clear()
 
 
-@admin.message(F.text == 'Расписание')
+@admin.message(F.text == 'Расписание 🗓')
 async def week_plan(message: Message):
     await message.answer('Выберите действие над расписанием', reply_markup=kb.week_plan)
 
@@ -201,12 +201,41 @@ async def data_upload_week_plan(callback: CallbackQuery):
 @admin.callback_query(F.data == 'check_week_plan')
 async def data_check_week_plan(callback: CallbackQuery):
     await callback.answer('')
-    await callback.message.answer('<b>Расписание на понедельник:</b>\n'
-                                  '1) Математика - Николай И.Н. 301 каб \n'
-                                  '2) Русский язык - Иванова А.М. 105 каб.\n'
-                                  '3) Информатика - Лебедев Н.О. 224 каб.\n'
-                                  '4) Физкультура - Елисеев А.П. 111 каб.',
-                                  parse_mode=ParseMode.HTML)
+    schedule = dict(Понедельник=[
+        '1) Математика - Николай И.Н. 301 каб',
+        '2) Русский язык - Иванова А.М. 105 каб.',
+        '3) Информатика - Лебедев Н.О. 224 каб.',
+        '4) Физкультура - Елисеев А.П. 111 каб.'
+    ], Вторник=[
+        '1) История - Петров С.В. 201 каб.',
+        '2) Литература - Сидорова Т.Ю. 105 каб.',
+        '3) Физика - Смирнов А.И. 302 каб.',
+        '4) Английский язык - Кузнецова М.Н. 107 каб.'
+    ], Среда=[
+        '1) Химия - Иванов П.П. 303 каб.',
+        '2) Биология - Сергеева Е.Д. 304 каб.',
+        '3) Обществознание - Соколов Д.В. 202 каб.',
+        '4) Технология - Петрова А.С. 106 каб.'
+    ], Четверг=[
+        '1) Алгебра - Николай И.Н. 301 каб.',
+        '2) Геометрия - Николай И.Н. 301 каб.',
+        '3) Физкультура - Елисеев А.П. 111 каб.',
+        '4) ОБЖ - Смирнов А.И. 302 каб.'
+    ], Пятница=[
+        '1) Русский язык - Иванова А.М. 105 каб.',
+        '2) Литература - Сидорова Т.Ю. 105 каб.',
+        '3) Информатика - Лебедев Н.О. 224 каб.',
+        '4) Английский язык - Кузнецова М.Н. 107 каб.'
+    ])
+
+    schedule_text = '<b>Расписание на неделю:</b>\n\n'
+    for day, lessons in schedule.items():
+        schedule_text += f'<b>{day}:</b>\n'
+        for lesson in lessons:
+            schedule_text += f'- {lesson}\n'
+        schedule_text += '\n'
+
+    await callback.message.answer(schedule_text, parse_mode=ParseMode.HTML)
 
 
 @admin.callback_query(F.data == 'del_week_plan')

@@ -6,11 +6,10 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery
 from aiogram.types import (InlineKeyboardMarkup, InlineKeyboardButton)
 import handlers.keyboards as kb
-from config import TOKEN, STUDENT_ID
+from config import TOKEN, STUDENT_ID, ADMIN_ID
 import json
 import sqlite3
 from datetime import datetime
-from .student import TeacherContact
 
 bot = Bot(token=TOKEN)
 
@@ -58,7 +57,7 @@ async def data_check_week_data(callback: CallbackQuery):
                                   parse_mode=ParseMode.HTML)
 
 
-@teach.message(F.text == 'Рассылка группе')
+@teach.message(F.text == 'Рассылка группе 📢')
 async def text_message_for_group_student(message: Message):
     await message.answer('<b>Выберите нужную группу для отправки рассылки</b>',
                          parse_mode=ParseMode.HTML, reply_markup=kb.groups_college)
@@ -108,7 +107,7 @@ class WorkTest(StatesGroup):
     q5_answer4 = State()
 
 
-@teach.message(F.text == 'Создать тест')
+@teach.message(F.text == 'Создать тест ➕')
 async def text_create_test(message: Message, state: FSMContext):
     await state.set_state(WorkTest.name_quest)
     await message.answer(f'Напишите название теста\n'
@@ -117,7 +116,7 @@ async def text_create_test(message: Message, state: FSMContext):
                          parse_mode=ParseMode.MARKDOWN)
 
 
-@teach.message(F.text == 'Выйти из создания теста')
+@teach.message(F.text == 'Выйти из создания теста 🙅')
 async def cmd_cancel(message: Message, state: FSMContext):
     await state.clear()
     await message.answer(f'*Создание теста прекращено*', parse_mode=ParseMode.MARKDOWN,
@@ -391,7 +390,7 @@ def save_test(test_data):
     conn.close()
 
 
-@teach.message(F.text == 'Список тестов')
+@teach.message(F.text == 'Список тестов 📖')
 async def text_show_tests(message: Message):
     cur.execute("SELECT id, name, created_at FROM tests")
     tests = cur.fetchall()
@@ -480,7 +479,7 @@ async def back_to_tests_list(callback_query: CallbackQuery):
     )
 
 
-@teach.message(F.text == 'Показать результаты')
+@teach.message(F.text == 'Показать результаты ✅')
 async def show_test_results(message: Message):
     conn_tests = sqlite3.connect('data/data_base/tests.db')
     c_tests = conn_tests.cursor()
@@ -530,3 +529,24 @@ async def show_selected_test_results(callback_query: CallbackQuery, state: FSMCo
 
     await callback_query.message.answer(formatted_results.strip(), parse_mode=ParseMode.MARKDOWN)
     await callback_query.answer('')
+
+
+class AdminCall(StatesGroup):
+    wait_to_message = State()
+
+
+@teach.message(F.text == "Связь с админом ☎️")
+async def text_call_admin(message: Message, state: FSMContext):
+    await state.set_state(AdminCall.wait_to_message)
+    await state.update_data(user_name=message.from_user.full_name)
+    await message.answer('Напишите сообщение администратору')
+
+
+@teach.message(AdminCall.wait_to_message)
+async def send_message_to_admin(message: Message, state: FSMContext):
+    data = await state.get_data()
+    user_name = data.get('user_name')
+    admin_chat_id = ADMIN_ID
+    await bot.send_message(chat_id=admin_chat_id, text=f"Новое сообщение от {user_name}:\n\n{message.text}")
+    await message.answer("Ваше сообщение отправлено администратору. Ожидайте ответа.")
+    await state.clear()
