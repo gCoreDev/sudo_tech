@@ -3,12 +3,12 @@ from datetime import datetime
 from aiogram import Bot
 from aiogram.enums.parse_mode import ParseMode
 from aiogram import F, Router
-from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
 import handlers.keyboards as kb
 from config import TOKEN, TEACHER_ID
 import sqlite3
+from .states import TeacherContact
 
 std = Router()
 
@@ -161,11 +161,6 @@ async def process_student_answer(callback_query: CallbackQuery, state: FSMContex
         await callback_query.message.edit_text("*Вы успешно закончили прохождение теста!*\n"
                                                "Ваши результаты были направлены преподавателю.",
                                                parse_mode=ParseMode.MARKDOWN)
-
-
-class TeacherContact(StatesGroup):
-    waiting_for_message = State()
-    waiting_for_response1 = State()
 
 
 async def send_message_to_teacher(message: Message):

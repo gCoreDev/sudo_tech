@@ -10,14 +10,11 @@ from config import TOKEN, STUDENT_ID, ADMIN_ID
 import json
 import sqlite3
 from datetime import datetime
+from .states import WorkTest, AdminCall, StudentAnswer
 
 bot = Bot(token=TOKEN)
 
 teach = Router()
-
-
-class StudentAnswer(StatesGroup):
-    waiting_for_response = State()
 
 
 async def send_message_to_student(message: Message):
@@ -76,35 +73,6 @@ cur.execute('''
 
 
 conn.commit()
-
-
-class WorkTest(StatesGroup):
-    name_quest = State()
-    quest1 = State()
-    q1_answer1 = State()
-    q1_answer2 = State()
-    q1_answer3 = State()
-    q1_answer4 = State()
-    quest2 = State()
-    q2_answer1 = State()
-    q2_answer2 = State()
-    q2_answer3 = State()
-    q2_answer4 = State()
-    quest3 = State()
-    q3_answer1 = State()
-    q3_answer2 = State()
-    q3_answer3 = State()
-    q3_answer4 = State()
-    quest4 = State()
-    q4_answer1 = State()
-    q4_answer2 = State()
-    q4_answer3 = State()
-    q4_answer4 = State()
-    quest5 = State()
-    q5_answer1 = State()
-    q5_answer2 = State()
-    q5_answer3 = State()
-    q5_answer4 = State()
 
 
 @teach.message(F.text == 'Создать тест ➕')
@@ -531,10 +499,6 @@ async def show_selected_test_results(callback_query: CallbackQuery, state: FSMCo
     await callback_query.answer('')
 
 
-class AdminCall(StatesGroup):
-    wait_to_message = State()
-
-
 @teach.message(F.text == "Связь с админом ☎️")
 async def text_call_admin(message: Message, state: FSMContext):
     await state.set_state(AdminCall.wait_to_message)
@@ -547,6 +511,7 @@ async def send_message_to_admin(message: Message, state: FSMContext):
     data = await state.get_data()
     user_name = data.get('user_name')
     admin_chat_id = ADMIN_ID
-    await bot.send_message(chat_id=admin_chat_id, text=f"Новое сообщение от {user_name}:\n\n{message.text}")
+    await bot.send_message(chat_id=admin_chat_id, text=f"*Новое сообщение от {user_name}:*\n\n{message.text}",
+                           parse_mode=ParseMode.MARKDOWN)
     await message.answer("Ваше сообщение отправлено администратору. Ожидайте ответа.")
     await state.clear()
