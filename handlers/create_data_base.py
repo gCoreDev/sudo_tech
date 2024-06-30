@@ -44,6 +44,7 @@ cur_messages.execute('''
         user_id INTEGER,
         user_type TEXT,
         message TEXT,
+        reply_to INTEGER,
         timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )   
 ''')
@@ -63,3 +64,5 @@ cur_results.execute('''
     )
 ''')
 conn_results.commit()
+
+

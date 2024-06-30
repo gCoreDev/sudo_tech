@@ -5,6 +5,7 @@ from aiogram.fsm.state import State, StatesGroup
 class TeacherContact(StatesGroup):
     waiting_for_message = State()
     waiting_for_response1 = State()
+    waiting_for_teacher = State()
 
 
 # Стэйты для тестов
@@ -43,5 +44,7 @@ class AdminCall(StatesGroup):
 
 
 # Ответ на сообщение студенту
-class StudentAnswer(StatesGroup):
+class StudentContact(StatesGroup):
+    waiting_for_message = State()
+    waiting_for_student = State()
     waiting_for_response = State()
