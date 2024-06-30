@@ -62,9 +62,8 @@ async def start_test(callback_query: CallbackQuery, state: FSMContext):
 
         await show_question(callback_query.message, state)
 
-        conn_tests.close()
-
     conn_results.close()
+    conn_tests.close()
     await callback_query.answer('')
 
 
