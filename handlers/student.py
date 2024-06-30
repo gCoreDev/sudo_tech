@@ -92,41 +92,44 @@ async def show_question(message: Message, state: FSMContext):
                              parse_mode=ParseMode.MARKDOWN)
 
 
-# @std.callback_query(lambda c: c.data.startswith("answer_"))
-# async def process_student_answer(callback_query: CallbackQuery, state: FSMContext):
-#     data = await state.get_data()
-#     test_id = data['test_id']
-#     test_name = data['test_name']
-#     questions = data['questions']
-#     current_question = data['current_question']
-#     selected_answer_index = int(callback_query.data.split("_")[-1])
-#     selected_answer_text = questions[current_question]['answers'][selected_answer_index]
-#
-#     cur_results.execute("INSERT INTO results (test_id, test_name, full_name, answer, answer_text, created_at)"
-#                         " VALUES (?, ?, ?, ?, ?, ?)",
-#                         (test_id, test_name, callback_query.from_user.full_name, selected_answer_index + 1,
-#                          selected_answer_text,
-#                          datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
-#     conn_results.commit()
-#
-#     if current_question < len(questions) - 1:
-#         await state.update_data(current_question=current_question + 1)
-#         question = questions[current_question + 1]
-#         keyboard = InlineKeyboardMarkup(inline_keyboard=[
-#             [InlineKeyboardButton(text=answer, callback_data=f"answer_{test_id}_{current_question + 1}_{i}")]
-#             for i, answer in enumerate(question['answers'])
-#         ])
-#
-#         await callback_query.message.edit_text(
-#             f"*Тест: {test_name}*\n\n*Вопрос {current_question + 2}:* *{question['question']}*\n\nВарианты ответа:",
-#             reply_markup=keyboard,
-#             parse_mode=ParseMode.MARKDOWN
-#         )
-#     else:
-#         await state.clear()
-#         await callback_query.message.edit_text("*Вы успешно закончили прохождение теста!*\n"
-#                                                "Ваши результаты были направлены преподавателю.",
-#                                                parse_mode=ParseMode.MARKDOWN)
+@std.callback_query(lambda c: c.data.startswith("answer_"))
+async def process_student_answer(callback_query: CallbackQuery, state: FSMContext):
+    data = await state.get_data()
+    if 'test_id' in data:
+        test_id = data['test_id']
+        test_name = data['test_name']
+        questions = data['questions']
+        current_question = data['current_question']
+        selected_answer_index = int(callback_query.data.split("_")[-1])
+        selected_answer_text = questions[current_question]['answers'][selected_answer_index]
+
+        cur_results.execute("INSERT INTO results (test_id, test_name, full_name, answer, answer_text, created_at)"
+                           " VALUES (?, ?, ?, ?, ?, ?)",
+                           (test_id, test_name, callback_query.from_user.full_name, selected_answer_index + 1,
+                            selected_answer_text,
+                            datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+        conn_results.commit()
+
+        if current_question < len(questions) - 1:
+            await state.update_data(current_question=current_question + 1)
+            question = questions[current_question + 1]
+            keyboard = InlineKeyboardMarkup(inline_keyboard=[
+                [InlineKeyboardButton(text=answer, callback_data=f"answer_{test_id}_{current_question + 1}_{i}")]
+                for i, answer in enumerate(question['answers'])
+            ])
+
+            await callback_query.message.edit_text(
+                f"*Тест: {test_name}*\n\n*Вопрос {current_question + 2}:* *{question['question']}*\n\nВарианты ответа:",
+                reply_markup=keyboard,
+                parse_mode=ParseMode.MARKDOWN
+            )
+        else:
+            await state.clear()
+            await callback_query.message.edit_text("*Вы успешно закончили прохождение теста!*\n"
+                                                  "Ваши результаты были направлены преподавателю.",
+                                                  parse_mode=ParseMode.MARKDOWN)
+    else:
+        await callback_query.answer("Ошибка: Тест не найден.")
 
 
 async def send_message_to_teacher(message: Message, user_id: int):
