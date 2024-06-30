@@ -1,48 +1,25 @@
 import json
 from datetime import datetime
-from aiogram import Bot
+from config import bot
 from aiogram.enums.parse_mode import ParseMode
 from aiogram import F, Router
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
 import handlers.keyboards as kb
-from config import TOKEN, TEACHER_ID
 import sqlite3
 from .states import TeacherContact
+from handlers.create_data_base import (cur_tests, cur_messages, cur_results, cur_users, cur_answers,
+                                       conn_tests, conn_messages, conn_results, conn_users, conn_answers)
 
 std = Router()
-
-bot = Bot(token=TOKEN)
-
-conn_results = sqlite3.connect('data/data_base/results.db')
-cur_results = conn_results.cursor()
-
-conn = sqlite3.connect('data/data_base/results.db')
-cur = conn.cursor()
-
-cur.execute('''CREATE TABLE IF NOT EXISTS results
-             (id INTEGER PRIMARY KEY,
-              test_id INTEGER,
-              test_name TEXT,
-              full_name TEXT,
-              answer TEXT,
-              answer_text TEXT,
-              created_at TEXT)''')
-conn.commit()
-
-conn = sqlite3.connect('data/data_base/users.db')
-cur = conn.cursor()
 
 
 @std.message(F.text == 'Показать тесты 🧑‍💻')
 async def show_test(message: Message):
     await message.answer("*Выберите тест, который хотите пройти.*", parse_mode=ParseMode.MARKDOWN)
 
-    conn_tests = sqlite3.connect('data/data_base/tests.db')
-    c_tests = conn_tests.cursor()
-
-    c_tests.execute("SELECT id, name FROM tests")
-    tests = c_tests.fetchall()
+    cur_tests.execute("SELECT id, name FROM tests")
+    tests = cur_tests.fetchall()
 
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text=test_name, callback_data=f"start_test_{test_id}")]
@@ -51,26 +28,25 @@ async def show_test(message: Message):
 
     await message.answer("Доступные тесты:", reply_markup=keyboard)
 
+    conn_tests.close()
+
 
 @std.callback_query(lambda c: c.data.startswith("start_test_"))
 async def start_test(callback_query: CallbackQuery, state: FSMContext):
     test_id = int(callback_query.data.split("_")[-1])
 
-    conn_results = sqlite3.connect('data/data_base/results.db')
-    c_results = conn_results.cursor()
-
-    c_results.execute("SELECT COUNT(*) FROM results WHERE test_id = ? AND full_name = ?",
-                      (test_id, callback_query.from_user.full_name))
-    count = c_results.fetchone()[0]
+    cur_results.execute("SELECT COUNT(*) FROM results WHERE test_id = ? AND full_name = ?",
+                        (test_id, callback_query.from_user.full_name))
+    count = cur_results.fetchone()[0]
 
     if count > 0:
-        c_results.execute("""
+        cur_results.execute("""
             SELECT answer_text, created_at 
             FROM results
             WHERE test_id = ? AND full_name = ?
             ORDER BY id
         """, (test_id, callback_query.from_user.full_name))
-        results = c_results.fetchall()
+        results = cur_results.fetchall()
 
         formatted_result = f"Вы уже проходили этот тест:\n\n"
         for answer_text, created_at in results:
@@ -78,11 +54,8 @@ async def start_test(callback_query: CallbackQuery, state: FSMContext):
             formatted_result += f"  _Дата: {created_at}_ ⏳\n\n"
         await callback_query.message.answer(formatted_result.strip(), parse_mode=ParseMode.MARKDOWN)
     else:
-        conn_tests = sqlite3.connect('data/data_base/tests.db')
-        c_tests = conn_tests.cursor()
-
-        c_tests.execute("SELECT name, questions FROM tests WHERE id = ?", (test_id,))
-        test_name, questions_json = c_tests.fetchone()
+        cur_tests.execute("SELECT name, questions FROM tests WHERE id = ?", (test_id,))
+        test_name, questions_json = cur_tests.fetchone()
         questions = json.loads(questions_json)
 
         await state.update_data(test_id=test_id, test_name=test_name, questions=questions, current_question=0)
@@ -136,14 +109,11 @@ async def process_student_answer(callback_query: CallbackQuery, state: FSMContex
     selected_answer_index = int(callback_query.data.split("_")[-1])
     selected_answer_text = questions[current_question]['answers'][selected_answer_index]
 
-    conn_results = sqlite3.connect('data/data_base/results.db')
-    c_results = conn_results.cursor()
-
-    c_results.execute("INSERT INTO results (test_id, test_name, full_name, answer, answer_text, created_at)"
-                      " VALUES (?, ?, ?, ?, ?, ?)",
-                      (test_id, test_name, callback_query.from_user.full_name, selected_answer_index + 1,
-                       selected_answer_text,
-                       datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+    cur_results.execute("INSERT INTO results (test_id, test_name, full_name, answer, answer_text, created_at)"
+                        " VALUES (?, ?, ?, ?, ?, ?)",
+                        (test_id, test_name, callback_query.from_user.full_name, selected_answer_index + 1,
+                         selected_answer_text,
+                         datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
     conn_results.commit()
 
     if current_question < len(questions) - 1:
@@ -168,8 +138,8 @@ async def process_student_answer(callback_query: CallbackQuery, state: FSMContex
 
 async def send_message_to_teacher(message: Message, user_id: int):
     await bot.send_message(user_id, f'<b>Сообщение от студента,'
-                                   f' {message.from_user.full_name}\n</b>'
-                                   f' {message.text}',
+                                    f' {message.from_user.full_name}\n</b>'
+                                    f' {message.text}',
                            reply_markup=kb.answer,
                            parse_mode=ParseMode.HTML)
 
@@ -188,18 +158,15 @@ async def answer_to_teacher(callback: CallbackQuery, state: FSMContext):
 @std.message(TeacherContact.waiting_for_response1)
 async def student_response(message: Message, state: FSMContext):
     # Получаем user_id преподавателя из таблицы users
-    conn = sqlite3.connect('data/data_base/users.db')
-    cur = conn.cursor()
-    cur.execute("SELECT user_id FROM users WHERE user_type = 'teacher' AND user_id = ?", (message.from_user.id,))
-    teacher_id = cur.fetchone()
+    cur_users.execute("SELECT user_id FROM users WHERE user_type = 'teacher' AND user_id = ?", (message.from_user.id,))
+    teacher_id = cur_users.fetchone()
     if teacher_id:
         await send_message_to_teacher(message, teacher_id[0])
         await message.answer('Ответ успешно отправлен')
     else:
         await message.answer('Не удалось найти ID преподавателя в базе данных')
     await state.clear()
-    conn.commit()
-    conn.close()
+    conn_users.close()
 
 
 @std.message(F.text == 'Связь с преподавателем ☎️')
@@ -214,22 +181,16 @@ async def teacher_connect_text(message: Message, state: FSMContext):
     if message.text.startswith('Связь с преподавателем'):
         return
 
-    # Определяем ID преподавателя, который отправил сообщение
-    teacher_id = message.from_user.id
-
-    # Получаем user_id студента из таблицы users
-    cur.execute("SELECT user_id FROM users WHERE user_type = 'student' AND user_id = ?", (message.from_user.id,))
-    student_id = cur.fetchone()
+    cur_users.execute("SELECT user_id FROM users WHERE user_type = 'student' AND user_id = ?", (message.from_user.id,))
+    student_id = cur_users.fetchone()
 
     if student_id:
-        await send_message_to_student(message, student_id[0])
         await message.answer('Сообщение успешно отправлено')
     else:
         await message.answer('Не удалось найти ID студента в базе данных')
 
     await state.clear()
-    conn.commit()
-    conn.close()
+    conn_users.close()
 
 
 @std.message(F.text == 'Учебные материалы 📚')

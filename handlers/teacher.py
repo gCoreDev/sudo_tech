@@ -5,14 +5,14 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery
 from aiogram.types import (InlineKeyboardMarkup, InlineKeyboardButton)
 import handlers.keyboards as kb
-from config import TOKEN, ADMIN_ID
+from config import ADMIN_ID
+from config import bot
 import json
 from datetime import datetime
 from .states import WorkTest, AdminCall, StudentAnswer
-from data.data_base.create_data_base import (cur_tests, cur_messages, cur_answers, cur_users, cur_results,
-                                             conn_tests, conn_messages, conn_answers, conn_users, conn_results)
+from handlers.create_data_base import (cur_tests, cur_users, cur_results,
+                                       conn_tests, conn_users)
 
-bot = Bot(token=TOKEN)
 
 teach = Router()
 
@@ -441,6 +441,7 @@ async def show_test_results(message: Message):
     ])
 
     await message.answer("Выберите тест, чтобы посмотреть результаты:", reply_markup=keyboard)
+    conn_tests.close()
 
 
 @teach.callback_query(lambda c: c.data.startswith("show_results_"))

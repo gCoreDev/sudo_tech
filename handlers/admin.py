@@ -5,14 +5,10 @@ from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.context import FSMContext
 from aiogram.enums.parse_mode import ParseMode
 import handlers.keyboards as kb
-import sqlite3
-
-from config import bot, DATA_DIR
+from handlers.create_data_base import (cur_users, conn_users)
+from config import bot
 
 admin = Router()
-
-conn = sqlite3.connect(DATA_DIR / 'data_base/users.db')
-cur = conn.cursor()
 
 
 @admin.message(F.text == 'Личный кабинет 👤')
@@ -20,8 +16,8 @@ async def per_acc_adm(message: Message):
     user_id = message.from_user.id
     user_full_name = message.from_user.full_name
     user_username = message.from_user.username
-    cur.execute('SELECT user_type FROM users WHERE user_id=?', (user_id,))
-    user = cur.fetchone()
+    cur_users.execute('SELECT user_type FROM users WHERE user_id=?', (user_id,))
+    user = cur_users.fetchone()
     if user:
         user_type = user[0]
         if user_type == 'admin':
@@ -43,17 +39,18 @@ async def per_acc_adm(message: Message):
 
 @admin.message(Command('users'))
 async def cmd_users(message: Message):
-    cur.execute('SELECT * FROM users')
-    users = cur.fetchall()
+    cur_users.execute('SELECT * FROM users')
+    users = cur_users.fetchall()
     user_list = 'Список пользователей\n'
     for user in users:
         user_list += ' | '.join(f'`{col}`' for col in user) + "\n"
     await message.answer(user_list, parse_mode=ParseMode.MARKDOWN)
+    conn_users.close()
 
 
 async def is_admin(user_id):
-    cur.execute("SELECT user_type FROM users WHERE user_id = ?", (user_id,))
-    result = cur.fetchone()
+    cur_users.execute("SELECT user_type FROM users WHERE user_id = ?", (user_id,))
+    result = cur_users.fetchone()
     if result and result[0] == 'admin':
         return True
     else:
@@ -80,14 +77,14 @@ async def cmd_edit(message: Message):
                 return
 
             # Проверяем, что пользователь существует в базе данных
-            cur.execute("SELECT * FROM users WHERE user_id = ?", (user_id,))
-            if not cur.fetchone():
+            cur_users.execute("SELECT * FROM users WHERE user_id = ?", (user_id,))
+            if not cur_users.fetchone():
                 await message.reply(f"‼️Пользователь с ID {user_id} не найден в базе данных.")
                 return
 
             # Обновляем тип пользователя в базе данных
-            cur.execute("UPDATE users SET user_type = ? WHERE user_id = ?", (new_user_type, user_id))
-            conn.commit()
+            cur_users.execute("UPDATE users SET user_type = ? WHERE user_id = ?", (new_user_type, user_id))
+            conn_users.commit()
 
             valid_user_types = ['guest', 'student', 'teacher', 'admin']
             if new_user_type not in valid_user_types:
@@ -100,13 +97,14 @@ async def cmd_edit(message: Message):
             await message.reply("Неверный формат команды. Используйте: /edit_user <user_id> <user_type>")
     else:
         await message.reply("⚠️ У вас нет прав для использования этой команды ")
+    conn_users.close()
 
 
 @admin.message(Command('del'))
 async def cmd_del(message: Message):
     user_id = message.from_user.id
-    cur.execute("SELECT user_type FROM users WHERE user_id=?", (user_id,))
-    user = cur.fetchone()
+    cur_users.execute("SELECT user_type FROM users WHERE user_id=?", (user_id,))
+    user = cur_users.fetchone()
     if not user or user[0] != 'admin':
         await message.answer("⚠️ У вас нет прав для использования этой команды!")
         return
@@ -123,16 +121,17 @@ async def cmd_del(message: Message):
         return
 
     # Проверяем существование пользователя с указанным del_user_id
-    cur.execute("SELECT 1 FROM users WHERE user_id=?", (del_user_id,))
-    existing_user = cur.fetchone()
+    cur_users.execute("SELECT 1 FROM users WHERE user_id=?", (del_user_id,))
+    existing_user = cur_users.fetchone()
     if not existing_user:
         await message.answer(f"‼️Пользователь с ID {del_user_id} не найден в базе данных.")
         return
 
     # Удаляем пользователя из базы данных
-    cur.execute("DELETE FROM users WHERE user_id=?", (del_user_id,))
-    conn.commit()
+    cur_users.execute("DELETE FROM users WHERE user_id=?", (del_user_id,))
+    conn_users.commit()
     await message.answer(f"✅ Пользователь с ID {del_user_id} успешно удален из базы данных.")
+    conn_users.close()
 
 
 @admin.message(F.text == 'Показать пользователей 👤')
@@ -157,8 +156,8 @@ class SendMessage(StatesGroup):
 
 
 def get_all_user_ids():
-    cur.execute("SELECT user_id FROM users")
-    user_ids = [row[0] for row in cur.fetchall()]
+    cur_users.execute("SELECT user_id FROM users")
+    user_ids = [row[0] for row in cur_users.fetchall()]
     return user_ids
 
 
