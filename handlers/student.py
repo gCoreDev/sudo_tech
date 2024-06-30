@@ -25,10 +25,7 @@ async def show_test(message: Message):
         [InlineKeyboardButton(text=test_name, callback_data=f"start_test_{test_id}")]
         for test_id, test_name in tests
     ])
-    conn_tests.close()
     await message.answer("Доступные тесты:", reply_markup=keyboard)
-
-
 
 
 @std.callback_query(lambda c: c.data.startswith("start_test_"))
