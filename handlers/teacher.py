@@ -343,7 +343,6 @@ def save_test(test_data):
                        json.dumps(test_data['questions']),
                        datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
     conn_tests.commit()
-    conn_tests.close()
 
 
 @teach.message(F.text == 'Список тестов 📖')

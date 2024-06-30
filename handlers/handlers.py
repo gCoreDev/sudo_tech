@@ -53,7 +53,6 @@ async def cmd_start(message: Message):
             else:
                 await message.answer(f'Добро пожаловать, гость, {message.from_user.full_name}'
                                      f' Вы находитесь в главном меню', reply_markup=kb.main)
-    conn_users.close()
 
 
 @hand.message(Command('check_list'))

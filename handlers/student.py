@@ -162,7 +162,6 @@ async def student_response(message: Message, state: FSMContext):
     else:
         await message.answer('Не удалось найти ID преподавателя в базе данных')
     await state.clear()
-    conn_users.close()
 
 
 @std.message(F.text == 'Связь с преподавателем ☎️')

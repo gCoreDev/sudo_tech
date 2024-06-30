@@ -45,7 +45,6 @@ async def cmd_users(message: Message):
     for user in users:
         user_list += ' | '.join(f'`{col}`' for col in user) + "\n"
     await message.answer(user_list, parse_mode=ParseMode.MARKDOWN)
-    conn_users.close()
 
 
 async def is_admin(user_id):
@@ -97,7 +96,6 @@ async def cmd_edit(message: Message):
             await message.reply("Неверный формат команды. Используйте: /edit_user <user_id> <user_type>")
     else:
         await message.reply("⚠️ У вас нет прав для использования этой команды ")
-    conn_users.close()
 
 
 @admin.message(Command('del'))
@@ -131,7 +129,6 @@ async def cmd_del(message: Message):
     cur_users.execute("DELETE FROM users WHERE user_id=?", (del_user_id,))
     conn_users.commit()
     await message.answer(f"✅ Пользователь с ID {del_user_id} успешно удален из базы данных.")
-    conn_users.close()
 
 
 @admin.message(F.text == 'Показать пользователей 👤')
