@@ -48,7 +48,6 @@ async def teacher_response(message: Message, state: FSMContext):
         await message.answer('Не удалось найти ID студента в базе данных')
     await state.clear()
     conn_users.commit()
-    conn_users.close()
 
 
 @teach.callback_query(F.data == 'check_week_data')
@@ -408,8 +407,6 @@ async def send_test_to_students(callback_query: CallbackQuery):
             reply_markup=keyboard
         )
 
-    conn_users.close()
-    conn_tests.close()
     await callback_query.message.edit_text("Тест отправлен студентам.")
 
 
@@ -441,7 +438,6 @@ async def show_test_results(message: Message):
     ])
 
     await message.answer("Выберите тест, чтобы посмотреть результаты:", reply_markup=keyboard)
-    conn_tests.close()
 
 
 @teach.callback_query(lambda c: c.data.startswith("show_results_"))

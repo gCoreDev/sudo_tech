@@ -6,7 +6,6 @@ from aiogram import F, Router
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
 import handlers.keyboards as kb
-import sqlite3
 from .states import TeacherContact
 from handlers.create_data_base import (cur_tests, cur_messages, cur_results, cur_users, cur_answers,
                                        conn_tests, conn_messages, conn_results, conn_users, conn_answers)
@@ -59,8 +58,6 @@ async def start_test(callback_query: CallbackQuery, state: FSMContext):
 
         await show_question(callback_query.message, state)
 
-    conn_results.close()
-    conn_tests.close()
     await callback_query.answer('')
 
 
@@ -111,6 +108,7 @@ async def process_student_answer(callback_query: CallbackQuery, state: FSMContex
                          selected_answer_text,
                          datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
     conn_results.commit()
+    conn_results.close()
 
     if current_question < len(questions) - 1:
         await state.update_data(current_question=current_question + 1)
@@ -186,7 +184,6 @@ async def teacher_connect_text(message: Message, state: FSMContext):
         await message.answer('Не удалось найти ID студента в базе данных')
 
     await state.clear()
-    conn_users.close()
 
 
 @std.message(F.text == 'Учебные материалы 📚')
