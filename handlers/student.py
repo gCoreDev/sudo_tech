@@ -108,7 +108,6 @@ async def process_student_answer(callback_query: CallbackQuery, state: FSMContex
                          selected_answer_text,
                          datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
     conn_results.commit()
-    conn_results.close()
 
     if current_question < len(questions) - 1:
         await state.update_data(current_question=current_question + 1)
