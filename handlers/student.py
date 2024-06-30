@@ -30,6 +30,9 @@ cur.execute('''CREATE TABLE IF NOT EXISTS results
               created_at TEXT)''')
 conn.commit()
 
+conn = sqlite3.connect('data/data_base/users.db')
+cur = conn.cursor()
+
 
 @std.message(F.text == 'Показать тесты 🧑‍💻')
 async def show_test(message: Message):
@@ -163,10 +166,10 @@ async def process_student_answer(callback_query: CallbackQuery, state: FSMContex
                                                parse_mode=ParseMode.MARKDOWN)
 
 
-async def send_message_to_teacher(message: Message):
-    await bot.send_message(TEACHER_ID, f'<b>Сообщение от студента,'
-                                       f' {message.from_user.full_name}\n</b>'
-                                       f' {message.text}',
+async def send_message_to_teacher(message: Message, user_id: int):
+    await bot.send_message(user_id, f'<b>Сообщение от студента,'
+                                   f' {message.from_user.full_name}\n</b>'
+                                   f' {message.text}',
                            reply_markup=kb.answer,
                            parse_mode=ParseMode.HTML)
 
@@ -184,9 +187,19 @@ async def answer_to_teacher(callback: CallbackQuery, state: FSMContext):
 
 @std.message(TeacherContact.waiting_for_response1)
 async def student_response(message: Message, state: FSMContext):
-    await send_message_to_teacher(message)
-    await message.answer('Ответ успешно отправлен')
+    # Получаем user_id преподавателя из таблицы users
+    conn = sqlite3.connect('data/data_base/users.db')
+    cur = conn.cursor()
+    cur.execute("SELECT user_id FROM users WHERE user_type = 'teacher' AND user_id = ?", (message.from_user.id,))
+    teacher_id = cur.fetchone()
+    if teacher_id:
+        await send_message_to_teacher(message, teacher_id[0])
+        await message.answer('Ответ успешно отправлен')
+    else:
+        await message.answer('Не удалось найти ID преподавателя в базе данных')
     await state.clear()
+    conn.commit()
+    conn.close()
 
 
 @std.message(F.text == 'Связь с преподавателем ☎️')
@@ -200,9 +213,23 @@ async def teacher_contact(message: Message, state: FSMContext):
 async def teacher_connect_text(message: Message, state: FSMContext):
     if message.text.startswith('Связь с преподавателем'):
         return
-    await send_message_to_teacher(message)
-    await message.answer('Сообщение успешно отправлено')
+
+    # Определяем ID преподавателя, который отправил сообщение
+    teacher_id = message.from_user.id
+
+    # Получаем user_id студента из таблицы users
+    cur.execute("SELECT user_id FROM users WHERE user_type = 'student' AND user_id = ?", (message.from_user.id,))
+    student_id = cur.fetchone()
+
+    if student_id:
+        await send_message_to_student(message, student_id[0])
+        await message.answer('Сообщение успешно отправлено')
+    else:
+        await message.answer('Не удалось найти ID студента в базе данных')
+
     await state.clear()
+    conn.commit()
+    conn.close()
 
 
 @std.message(F.text == 'Учебные материалы 📚')
