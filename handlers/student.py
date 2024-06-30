@@ -7,8 +7,8 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
 import handlers.keyboards as kb
 from .states import TeacherContact
-from handlers.create_data_base import (cur_tests, cur_messages, cur_results, cur_users, cur_answers,
-                                       conn_tests, conn_messages, conn_results, conn_users, conn_answers)
+from handlers.create_data_base import (cur_tests, cur_messages, cur_results, cur_users,
+                                       conn_tests, conn_messages, conn_results, conn_users)
 
 std = Router()
 

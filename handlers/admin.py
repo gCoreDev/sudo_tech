@@ -238,3 +238,6 @@ async def data_check_week_plan(callback: CallbackQuery):
 async def data_del_week_plan(callback: CallbackQuery):
     await callback.answer('')
     await callback.message.answer('Введите команду /del week_plan')
+
+
+

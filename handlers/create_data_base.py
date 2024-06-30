@@ -3,12 +3,10 @@ import sqlite3
 conn_tests = sqlite3.connect('data/data_base/tests.db')
 conn_users = sqlite3.connect('data/data_base/users.db')
 conn_results = sqlite3.connect('data/data_base/results.db')
-conn_answers = sqlite3.connect('data/data_base/answers.db')
 conn_messages = sqlite3.connect('data/data_base/messages.db')
 cur_tests = conn_tests.cursor()
 cur_users = conn_users.cursor()
 cur_results = conn_results.cursor()
-cur_answers = conn_answers.cursor()
 cur_messages = conn_messages.cursor()
 
 
@@ -64,5 +62,7 @@ cur_results.execute('''
     )
 ''')
 conn_results.commit()
+
+
 
 
