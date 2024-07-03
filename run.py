@@ -1,18 +1,16 @@
-import logging
-import os
 import asyncio
+import logging
 
 from aiogram import Bot, Dispatcher
-
 from dotenv import load_dotenv
 
 from config import ADMIN_ID
 from config import TOKEN
-from handlers.handlers import hand
 from handlers.admin import admin
+from handlers.handlers import hand
+from handlers.send_files import file
 from handlers.student import std
 from handlers.teacher import teach
-from handlers.send_files import file
 
 
 async def main():
