@@ -1,6 +1,7 @@
 import json
 from datetime import datetime
 
+import requests
 from aiogram import F, Router
 from aiogram.enums.parse_mode import ParseMode
 from aiogram.fsm.state import State, StatesGroup
@@ -8,7 +9,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
 
 import handlers.keyboards as kb
-from config import bot
+from config import bot, WEATHER
 from handlers.create_data_base import (cur_tests, cur_messages, cur_results, cur_users,
                                        conn_messages, conn_results, conn_users)
 from .states import StudentMessage
@@ -276,3 +277,5 @@ async def text_menu(message: Message):
         menu_text += '\n'
 
     await message.answer(menu_text, parse_mode=ParseMode.HTML)
+
+

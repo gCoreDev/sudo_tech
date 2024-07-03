@@ -1,12 +1,16 @@
 import asyncio
-from aiogram import F, Router
+
+import requests
+from aiogram import F, Router, Bot
 from aiogram.filters import CommandStart, Command
 from aiogram.types import Message
 from aiogram.enums import ChatAction
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+
 import handlers.keyboards as kb
 import openpyxl
-from handlers.create_data_base import (cur_users, conn_users)
-from config import DATA_DIR
+from config import DATA_DIR, WEATHER, bot
+from handlers.create_data_base import conn_users, cur_users
 
 hand = Router()
 
@@ -111,3 +115,59 @@ async def cmd_group(message: Message):
     await message.answer_photo(photo='https://proverili.ru/uploads/media/'
                                      '5236/1.jpg')
     await message.answer('Канал колледжа', reply_markup=kb.group)
+
+
+def get_current_weather(city):
+    url = f"http://api.openweathermap.org/data/2.5/weather?q={city}&appid={WEATHER}&units=metric"
+    response = requests.get(url)
+    return response.json()
+
+
+async def send_daily_weather(bot: Bot):
+    city = "Vladivostok"  # Замените на нужный город
+
+    weather_data = get_current_weather(city)
+
+    # Формирование сообщения с информацией о погоде
+    weather_message = f"Доброе утро! Сегодняшняя погода в {city}:\n" \
+                      f"Температура: {weather_data['main']['temp']}°C\n" \
+                      f"Влажность: {weather_data['main']['humidity']}%\n" \
+                      f"Скорость ветра: {weather_data['wind']['speed']} м/с"
+
+    # Отправка сообщения всем пользователям бота
+    user_ids = await get_all_user_ids()
+
+    # Отправка сообщения всем пользователям
+    for user_id in user_ids:
+        await bot.send_message(chat_id=user_id, text=weather_message)
+
+
+async def get_all_user_ids():
+    cur_users.execute("SELECT user_id FROM users")
+    user_ids = [row[0] for row in cur_users.fetchall()]
+    return user_ids
+
+
+@hand.message(F.text == 'Погода 🌤')
+async def text_weather(message: Message):
+    city = "Vladivostok"  # Замените на нужный город
+
+    try:
+        weather_data = get_current_weather(city)
+
+        # Формирование сообщения с информацией о погоде
+        weather_message = f"Текущая погода в {city}:\n" \
+                          f"Температура: {weather_data['main']['temp']}°C\n" \
+                          f"Влажность: {weather_data['main']['humidity']}%\n" \
+                          f"Скорость ветра: {weather_data['wind']['speed']} м/с"
+
+        # Отправка сообщения пользователю
+        await message.answer(weather_message)
+
+    except Exception as e:
+        await message.answer(f"Произошла ошибка: {e}")
+
+
+scheduler = AsyncIOScheduler()
+scheduler.add_job(send_daily_weather, "cron", hour=8, minute=0, args=[bot])
+scheduler.start()

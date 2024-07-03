@@ -1,4 +1,5 @@
-from aiogram import F, Router
+import requests
+from aiogram import F, Router, Bot
 from aiogram.filters import Command
 from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.state import State, StatesGroup
@@ -238,6 +239,7 @@ async def data_check_week_plan(callback: CallbackQuery):
 async def data_del_week_plan(callback: CallbackQuery):
     await callback.answer('')
     await callback.message.answer('Введите команду /del week_plan')
+
 
 
 
