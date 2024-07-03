@@ -1,81 +1,71 @@
-from aiogram.enums.parse_mode import ParseMode
+import json
+from datetime import datetime
+
 from aiogram import F, Router
+from aiogram.enums.parse_mode import ParseMode
+from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.context import FSMContext
-from aiogram.types import Message, CallbackQuery
 from aiogram.types import (InlineKeyboardMarkup, InlineKeyboardButton)
+from aiogram.types import Message, CallbackQuery
+
 import handlers.keyboards as kb
 from config import ADMIN_ID
 from config import bot
-import json
-from datetime import datetime
-from .states import WorkTest, AdminCall, StudentContact
 from handlers.create_data_base import (cur_tests, cur_users, cur_results,
                                        conn_tests, conn_users, cur_messages, conn_messages)
+from .states import WorkTest, AdminCall, TeacherMessage
 
 teach = Router()
 
 
-@teach.message(F.text == 'Связь со студентами ☎️')
-async def student_contact(message: Message, state: FSMContext):
-    # Получаем список студентов из таблицы users
-    cur_users.execute("SELECT user_id, user_full_name FROM users WHERE user_type = 'student'")
-    students = cur_users.fetchall()
-
-    # Формируем клавиатуру с инлайн-кнопками
-    keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text=f"{full_name}", callback_data=f"send_to_student_{user_id}")]
-        for user_id, full_name in students
-    ])
-
-    await message.answer("Выберите студента из списка:", reply_markup=keyboard)
-    await state.set_state(StudentContact.waiting_for_student)
-
-
-@teach.callback_query(lambda c: c.data.startswith("send_to_student_"))
-async def send_to_student(callback_query: CallbackQuery, state: FSMContext):
-    student_id = int(callback_query.data.split("_")[-1])
-    await state.update_data(student_id=student_id)
-    await state.set_state(StudentContact.waiting_for_message)
-    await callback_query.message.answer("Напишите сообщение студенту")
-    await callback_query.answer()
-
-
-@teach.callback_query(F.data.startswith('answer'))
-async def answer_to_student(callback: CallbackQuery, state: FSMContext):
-    if callback.data.startswith('answer'):
-        await state.update_data(waiting_for_message=callback.data)
-        await state.set_state(StudentContact.waiting_for_response)
-        await callback.message.answer('Напишите сообщение студенту')
-        await callback.answer('')
-    else:
-        await callback.answer('Нажмите на кнопку "Ответить"')
-
-
-@teach.message(StudentContact.waiting_for_response)
-async def send_message_to_student(message: Message, state: FSMContext):
-    # Сохраняем сообщение преподавателя в таблицу messages
-    data = await state.get_data()
-    student_id = data.get('student_id')
-    if student_id:
-        cur_messages.execute("INSERT INTO messages (user_id, user_type, message) VALUES (?, ?, ?)",
-                             (message.from_user.id, 'teacher', message.text))
-        conn_messages.commit()
-
-        # Отправляем сообщение студенту
-        await send_message_to_student(message, student_id, 'преподаватель')
-        await message.answer("Сообщение успешно отправлено.")
-    else:
-        await message.answer('Не удалось найти ID студента в базе данных')
-
-    await state.clear()
-
-
-async def send_message_to_student(message: Message, user_id: int, user_type: str):
-    await bot.send_message(user_id, f'*Сообщение от {user_type},'
-                                    f' {message.from_user.full_name}\n\n*'
-                                    f' {message.text}',
-                           reply_markup=kb.st_answer,
-                           parse_mode=ParseMode.MARKDOWN)
+# Обработчики для преподавателей
+# @teach.callback_query(F.data.startswith('answer'))
+# async def answer_to_student(callback: CallbackQuery, state: FSMContext):
+#     data = callback.data.split('_')
+#     if len(data) > 1:
+#         student_id = int(data[1])
+#         cur_users.execute("SELECT user_id FROM users WHERE user_type = 'student' AND user_id = ?", (student_id,))
+#         student = await cur_users.fetchone()
+#         if student:
+#             await state.update_data(student_id=student[0])
+#             await state.set_state(TeacherMessage.waiting_for_response)
+#             await callback.message.answer('Напишите сообщение студенту')
+#             await callback.answer()
+#         else:
+#             await callback.message.answer('Не удалось найти ID студента в базе данных')
+#             await callback.answer()
+#     else:
+#         await callback.answer('Нажмите на кнопку "Ответить"')
+#
+#
+# @teach.message(TeacherMessage.waiting_for_response)
+# async def send_message_to_student(message: Message, state: FSMContext):
+#     data = await state.get_data()
+#     student_id = data.get('student_id')
+#     if student_id:
+#         cur_users.execute("SELECT user_id FROM users WHERE user_type = 'student' AND user_id = ?", (student_id,))
+#         student = await cur_users.fetchone()
+#         if student:
+#             cur_messages.execute("INSERT INTO messages (user_id, user_type, message) VALUES (?, ?, ?)",
+#                                  (student[0], 'teacher', message.text))
+#             await conn_messages.commit()
+#             await message.answer("Сообщение успешно отправлено.")
+#         else:
+#             await message.answer('Не удалось найти ID студента в базе данных')
+#             await state.clear()
+#     else:
+#         await message.answer('Не удалось найти ID студента в базе данных')
+#         await state.clear()
+#
+#
+# async def send_message_to_teacher(message: Message, user_id: int, user_type: str):
+#     await bot.send_message(user_id, f'*Сообщение от {user_type},'
+#                                     f' {message.from_user.full_name}\n\n*'
+#                                     f' {message.text}',
+#                            reply_markup=InlineKeyboardMarkup(inline_keyboard=[
+#                                [InlineKeyboardButton(text="Ответить", callback_data=f"answer_{message.from_user.id}")]
+#                            ]),
+#                            parse_mode=ParseMode.MARKDOWN)
 
 
 @teach.callback_query(F.data == 'check_week_data')
@@ -466,7 +456,7 @@ async def show_test_results(message: Message):
     await message.answer("Выберите тест, чтобы посмотреть результаты:", reply_markup=keyboard)
 
 
-@teach.callback_query(lambda c: c.data.startswith("show_results_"))
+@teach.callback_query(F.data.startswith("show_results_"))
 async def show_selected_test_results(callback_query: CallbackQuery):
     test_name = callback_query.data.split("_")[-1]
 
